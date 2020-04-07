@@ -6,7 +6,7 @@ layout: index
 
 # Spatially explicit models for distance sampling data: density surface modelling in practice
 
-## 8-12 June 2020, 1700-1900 BST // 1200-1400 EDT // 0900-1100 PDT
+**8-12 June 2020, 1700-1900 BST // 1200-1400 EDT // 0900-1100 PDT**
 
 This online course will cover how to fit spatial models to distance sampling data ("density surface modelling") in R. This will include:
 
