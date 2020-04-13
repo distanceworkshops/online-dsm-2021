@@ -34,7 +34,7 @@ Prior to the course we will running a software test meeting to ensure everyone c
 
 **Registration deadline: 4 May 2020**
 
-Registration link to appear
+[**Click here to register**](https://www.creem.st-andrews.ac.uk/spatial-modelling-live-online-workshop/)
 
 Feel free to contact dlm22@st-andrews.ac.uk for more information.
 
