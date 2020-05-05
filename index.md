@@ -22,20 +22,22 @@ Examples will be based around a line transect survey of sperm whales in the west
 
 The course will consist of 5 live sessions delivered over videoconference. Between these sessions there will be practical R exercises to complete and to assist with these practicals there will be text-based "office hours", where participants questions can be addressed. Each videoconference session will include time for lecturing and discussion of practical exercises.
 
-We are limiting enrolment to 10 for this first offering, but may run an additional course later in the year (please e-mail to register your interest, especially if this time of day doesn't suit you or if you would be interested in a point transect-focussed course).
+### R requirements
 
-### Prerequisites
+Please make sure you have the latest version of R on your computer (version 4). You can download this from: [https://cran.r-project.org/](https://cran.r-project.org/)
 
-You should already know about distance sampling, for example by having taken an introductory workshop in person or online (either interactively or via our free pre-recorded lectures). You should also have some basic R knowledge.
+Once R is installed, please run the following lines of code:
 
-Prior to the course we will running a software test meeting to ensure everyone can participate satisfactorily.
+```r
+install.packages(c("optimx", "numDeriv", "Rsolnp", "pander", "dplyr",
+                   "mrds", "Distance", "dsm",
+                   "ggplot2", "rgdal", "knitr", "plyr", "raster", 
+                   "reshape2", "viridis", "bitops", "rmarkdown",
+                   "tweedie", "shapefiles", "remotes"))
+```
 
-**Cost: £250**
+to ensure that you have the latest versions of all the R packages you need for the course.
 
-**Registration deadline: 4 May 2020**
-
-[**Click here to register**](https://www.creem.st-andrews.ac.uk/spatial-modelling-live-online-workshop/)
-
-Feel free to contact dlm22@st-andrews.ac.uk for more information.
+Note that this might take a while depending on your internet connection speed.
 
 
