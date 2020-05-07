@@ -69,3 +69,11 @@ to ensure that you have the latest versions of all the R packages you need for t
 Note that this might take a while depending on your internet connection speed.
 
 
+## Additional resources
+
+- ["An Introduction to R" online book from Aberdeen University](https://alexd106.github.io/Rbook/)
+- [Distance sampling online](https://workshops.distancesampling.org/online-course/) free video lectures on distance sampling from CREEM
+- ["Distance sampling: methods and applications" book](https://www.springer.com/us/book/9783319192185) good overview of most of distance sampling. If your institution has a Springer account the ebook may be free for you and you can order a "MyCopy" paper version (softback, no colour figures) for $25.
+
+
+
