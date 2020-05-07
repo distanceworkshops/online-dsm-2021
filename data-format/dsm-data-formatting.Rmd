@@ -50,6 +50,8 @@ The Rhode Island data required downloaded below:
 - [transects shapefile](data/ri_transects.shp)
 - [transects shx](data/ri_transects.shx)
 
+These should be placed in a folder called `data` for the code below to work.
+
 # Overview
 
 When we collect distance sampling data, we need to record the distance to an observation (along with other detectability covariates like weather), the transect we are currently on and how much effort we expended on that transect (its length or number of visits).
