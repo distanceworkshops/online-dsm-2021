@@ -22,6 +22,34 @@ Examples will be based around a line transect survey of sperm whales in the west
 
 The course will consist of 5 live sessions delivered over videoconference. Between these sessions there will be practical R exercises to complete and to assist with these practicals there will be text-based "office hours", where participants questions can be addressed. Each videoconference session will include time for lecturing and discussion of practical exercises.
 
+## Schedule
+
+Session     | Part      | Description
+------------|-----------|--------------
+*Monday*    | Lecture   | Introductions
+            |           | Distance sampling refresher
+            |           | What is a DSM?
+            |           | Getting to know the data
+            | Practical | Detection function fitting
+*Tuesday*   | Lecture   | Recap/solutions for "Detection function fitting"
+            |           | Generalized additive models
+            | Practical | Fitting simple DSMs
+*Wednesday* | Lecture   | Recap/solutions for "Fitting simple DSMs"
+            |           | Multiple smooths
+            |           | Model selection
+            | Practical | Fitting and selecting more complex models
+*Thursday*  | Lecture   | Recap/solutions for "Fitting and selecting more complex models"
+            |           | Model checking
+            | Practical | Checking previous models
+*Friday*    | Lecture   | Recap/solutions for "Checking previous models"
+            |           | Making predictions
+            |           | Estimating variance
+            |           | Practical advice
+            | Practical | Making predictions, variance estimation, maps
+
+
+
+
 ### R requirements
 
 Please make sure you have the latest version of R on your computer (version 4). You can download this from: [https://cran.r-project.org/](https://cran.r-project.org/)
