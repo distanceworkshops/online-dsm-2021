@@ -1,0 +1,574 @@
+---
+title: "Lecture 2: Generalized Additive Models"
+author: "David L Miller (`@millerdl`)"
+output:
+  xaringan::moon_reader:
+    nature:
+      highlightStyle: github
+      highlightLines: true
+    seal: false
+    lib_dir: libs
+    mathjax: "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-MML-AM_HTMLorMML"
+css: custom.css
+
+---
+
+```{r setup, include=FALSE}
+# setup
+library(knitr)
+library(magrittr)
+library(viridis)
+library(reshape2)
+library(animation)
+opts_chunk$set(cache=TRUE, echo=FALSE, warning=FALSE, error=FALSE,
+               message=FALSE, dev='svg')
+
+# some useful libraries
+library(RColorBrewer)
+library(ggplot2)
+library(cowplot)
+theme_set(theme_cowplot(20))
+```
+
+
+# Lecture 2 : Generalized Additive Models
+
+<div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px">
+<img src="images/02-foundation-vertical-white.png" height="200">
+</div>
+
+---
+
+
+
+
+
+```{r initialmodeletc, echo=FALSE, message=FALSE, warning=FALSE}
+load("../data/spermwhale.RData")
+library(Distance)
+library(dsm)
+df <- ds(distdata, truncation=6000)
+dsm_tw_xy_depth <- dsm(count ~ s(x, y) + s(Depth), ddf.obj=df, observation.data=obs, segment.data=segs, family=tw())
+```
+
+# Overview
+
+- The count model, from scratch
+- What is a GAM?
+- What is smoothing?
+- Fitting GAMs using `dsm`
+
+---
+
+# Building a model, from scratch
+
+- Know count $n_j$ in segment $j$
+- Want :
+
+$$
+n_j = f( [\text{environmental covariates}]_j)
+$$
+
+- Additive model of smooths $s$:
+
+$$
+n_j = \color{green}{\exp} \left[ \color{grey}{ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j)} \right]
+$$
+- $\color{grey}{\text{model terms}}$
+- $\color{green}{\exp}$ is the *link function*
+
+---
+
+# Building a model, from scratch
+
+- What about area and detectability?
+$$
+n_j = \color{red}{A_j}\color{blue}{\hat{p}_j}\color{green}{\exp} \left[ \color{grey}{ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j)} \right]
+$$
+
+- $\color{red}{A_j}$ area of segment - "offset"
+- $\color{blue}{\hat{p}_j}$ probability of detection in segment
+
+
+---
+
+# Building a model, from scratch
+
+- It's a statistical model so:
+$$
+n_j = \color{red}{A_j}\color{blue}{\hat{p}_j}\color{green}{\exp} \left[ \color{grey}{ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j)}\right] + \epsilon_j
+$$
+
+- $n_j$ has a distribution (count)
+- $\epsilon_j$ are errors (differences between model and observations)
+
+---
+class: inverse, center, middle
+
+# That's a Generalized Additive Model!
+
+---
+class: inverse, center, middle
+
+# Now let's look at each bit...
+
+
+---
+# Response
+
+$$
+\color{red}{n_j} = A_j\hat{p}_j \exp\left[ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j) \right] + \epsilon_j
+$$
+<br/>
+where $\epsilon_j$ are some errors, $\quad \color{red}{n_j\sim \text{count distribution}}$
+
+
+---
+# Count distributions
+
+.pull-left[
+```{r countshist, fig.height=10}
+par(ps=20, mfrow=c(2,1))
+hist(dsm_tw_xy_depth$data$count, xlab="Count", main="All segments")
+hist(dsm_tw_xy_depth$data$count[dsm_tw_xy_depth$data$count>0],
+     xlab="Count", main="Counts > 0")
+```
+]
+
+.pull-right[
+- Response is a count
+- Often, it's mostly zero
+- Flexible mean-variance relationship
+- (Poisson isn't good at this)
+]
+
+---
+
+# Tweedie distribution
+
+
+.pull-left[
+```{r tweedie}
+par(ps=17)
+library(RColorBrewer)
+library(mgcv)
+
+# taken from ?mgcv::ldTweedie
+y <- seq(1e-10,10,length=1000)
+p <- seq(1.2, 1.6, by=0.2)
+phi <- 1
+fy <- exp(ldTweedie(y,mu=2,p=p[1],phi=phi)[,1])
+
+rr <- brewer.pal(8,"Dark2")
+
+plot(y, fy, type="n", ylim=c(0,1), main="Tweedie density as q changes",
+     xlab="Count", ylab="Density")
+for (i in 1:length(p)) {
+  fy <- exp(ldTweedie(y, mu=2, p=p[i], phi=phi)[, 1])
+  lines(y, fy, col=rr[i], lwd=2.5)
+}
+
+legend(x="topright", legend=p, fill=rr, inset=0.05)
+
+```
+(NB there is a point mass at zero not plotted)
+]
+.pull-right[
+-  $\text{Var}\left(\text{count}\right) = \phi\mathbb{E}(\text{count})^q$
+- Poisson is $q=1$ 
+- We estimate $q$ and $\phi$ 
+]
+
+---
+
+# Negative binomial distribution
+
+
+.pull-left[
+```{r negbin}
+par(ps=15)
+
+y<-seq(1,12,by=1)
+disps <- seq(0.01, 1, len=5)
+
+fymat <- matrix(NA, length(y), length(disps))
+
+i <- 1
+for(disp in disps){
+  fymat[,i] <- dnbinom(y, size=disp, mu=5)
+  i <- i+1
+}
+
+plot(range(y), range(fymat), type="n", ylab="Density", xlab="x", cex.lab=1.5,
+     main="")
+
+rr <- brewer.pal(8,"Dark2")
+
+for(i in 1:ncol(fymat)){
+  lines(y, fymat[,i], type="l", col=rr[i], lwd=2)
+}
+
+legend(x="topright", legend=disps, fill=rr, inset=0.05)
+
+```
+]
+.pull-right[
+- $\text{Var}\left(\text{count}\right) =$ $\mathbb{E}(\text{count}) + \kappa \mathbb{E}(\text{count})^2$
+- Estimate $\kappa$
+- (Poisson: $\text{Var}\left(\text{count}\right) =\mathbb{E}(\text{count})$) 
+]
+
+---
+# Smooths
+
+
+$$
+n_j = A_j\hat{p}_j \exp\left[ \beta_0 + \color{red}{s(\text{y}_j) + s(\text{Depth}_j}) \right] + \epsilon_j
+$$
+<br/>
+where $\epsilon_j$ are some errors, $\quad n_j\sim$ count distribution
+
+---
+# What about these "s" things?
+
+
+.pull-left[
+```{r wiggles}
+par(cex=1.5, lwd=1.75)
+library(mgcv)
+# hacked from the example in ?gam
+set.seed(2) ## simulate some data... 
+dat <- gamSim(1,n=50,dist="normal",scale=0.5, verbose=FALSE)
+dat$y <- dat$f2 + rnorm(length(dat$f2), sd = sqrt(0.5))
+f2 <- function(x) 0.2*x^11*(10*(1-x))^6+10*(10*x)^3*(1-x)^10-mean(dat$y)
+ylim <- c(-4,6)
+
+# fit some models
+b.justright <- gam(y~s(x2),data=dat)
+b.sp0 <- gam(y~s(x2, sp=0, k=50),data=dat)
+b.spinf <- gam(y~s(x2),data=dat, sp=1e10)
+
+curve(f2, 0, 1, col="blue", ylim=ylim)
+points(dat$x2, dat$y-mean(dat$y), pch=19, cex=0.8)
+```
+]
+.pull-right[
+- *Think* $s$=**smooth**
+- Want a line that is "close" to all the data
+- Balance between interpolation and "fit"
+]
+
+
+---
+class: inverse, middle, center
+# What is smoothing?
+
+---
+# Smoothing
+
+- We think underlying phenomenon is *smooth*
+  - "Abundance is a smooth function of depth"
+- 1, 2 or more dimensions
+
+```{r examplesmooths, out.width=800}
+par(mfrow=c(2,2))
+plot(dsm_tw_xy_depth, select=1, scheme=2, asp=1)
+plot(dsm_tw_xy_depth, select=2, shade=TRUE)
+```
+
+---
+# Smoothing
+
+.pull-left[
+- Estimate smooths
+- We set:
+  - "type": *bases* (made up of *basis functions*)
+  - basis size/dimension/complexity -- *maximum wigglyness*
+- Automatically
+  - *estimate how wiggly it needs to be*
+]
+.pull-right[
+```{r wiggles-plot2}
+# make three plots, w. estimated smooth, truth and data on each
+par(pch=19, lwd=1.5)
+plot(b.sp0, se=FALSE, ylim=ylim, main="")
+points(dat$x2, dat$y-mean(dat$y))
+curve(f2,0,1, col="blue", add=TRUE)
+```
+]
+---
+
+# Splines
+
+.pull-left[
+```{r results='hide'}
+par(cex=1.5, mar=c(5, 4, 1, 2) + 0.1, ps=20)
+set.seed(2)
+datb <- gamSim(1,n=400,dist="normal",scale=2)
+bb <- gam(y~s(x0, k=10, bs="bs"),data=datb)
+
+# main plot
+plot(bb, se=FALSE, ylim=c(-1, 1), lwd=3, col="blue", rug=FALSE)
+
+# plot each basis
+cf <- coef(bb)
+xp <- data.frame(x0=seq(0, 1, length.out=100))
+Xp <- predict(bb, newdata=xp, type="lpmatrix")
+
+for(i in 2:length(cf)){
+  cf_c <- cf
+  cf_c[-i] <- 0
+  cf_c[i] <- 1
+  lines(xp$x0, as.vector(Xp%*%cf_c), lty=i+1, lwd=3)
+}
+```
+]
+.pull-right[
+
+- Functions made of other, simpler functions
+- **Basis functions** $b_k$, estimate $\beta_k$ 
+- $s(x) = \sum_{k=1}^K \beta_k b_k(x)$
+]
+
+---
+# Measuring wigglyness
+
+- Visually:
+  - Lots of wiggles $\Rightarrow$ *not smooth*
+  - Straight line $\Rightarrow$ *very smooth*
+
+
+```{r wiggles-plot, fig.width=18, fig.height=7}
+# make three plots, w. estimated smooth, truth and data on each
+par(mfrow=c(1,3), lwd=2.6, cex=1.3, pch=19, cex.main=1.8)
+
+plot(b.justright, se=FALSE, ylim=ylim, main=expression(lambda*plain("= estimated")))
+points(dat$x2, dat$y-mean(dat$y))
+curve(f2,0,1, col="blue", add=TRUE)
+
+plot(b.sp0, se=FALSE, ylim=ylim, main=expression(lambda*plain("=")*0))
+points(dat$x2, dat$y-mean(dat$y))
+curve(f2,0,1, col="blue", add=TRUE)
+
+plot(b.spinf, se=FALSE, ylim=ylim, main=expression(lambda*plain("=")*infinity)) 
+points(dat$x2, dat$y-mean(dat$y))
+curve(f2,0,1, col="blue", add=TRUE)
+
+```
+
+
+---
+
+# How wiggly are things?
+
+
+- Set **basis complexity** or "size" $k$
+- Fitted smooths have **effective degrees of freedom** (EDF)
+- Set $k$ "large enough"
+
+```{r wiggles-plot-EDF, fig.width=18, fig.height=8}
+# make three plots, w. estimated smooth, truth and data on each
+par(mfrow=c(1,3), lwd=2.6, cex=1.6, pch=19, cex.main=1.8)
+
+plot(b.justright, se=FALSE, ylim=ylim, main=paste0("EDF=",round(sum(b.justright$edf),2)))
+points(dat$x2, dat$y-mean(dat$y))
+curve(f2,0,1, col="blue", add=TRUE)
+
+plot(b.sp0, se=FALSE, ylim=ylim, main=paste0("EDF=",round(sum(b.sp0$edf),2)))
+points(dat$x2, dat$y-mean(dat$y))
+curve(f2,0,1, col="blue", add=TRUE)
+
+plot(b.spinf, se=FALSE, ylim=ylim, main=paste0("EDF=",round(sum(b.spinf$edf),2)))
+points(dat$x2, dat$y-mean(dat$y))
+curve(f2,0,1, col="blue", add=TRUE)
+
+```
+
+---
+# Getting more out of GAMs
+
+.pull-left[
+![](images/igam.jpg)
+]
+
+.pull-right[
+- I can't teach you all of GAMs in 1 week
+- Good intro book
+- (also a good textbook on GLMs and GLMMs)
+- Quite technical in places
+- More resources on course website
+]
+
+
+---
+class: inverse, middle, center
+# Fitting GAMs using dsm
+
+---
+# Translating maths into R
+
+$$
+n_j = A_j\hat{p}_j \exp\left[ \beta_0 + s(\text{y}_j) \right] + \epsilon_j
+$$
+<br/>
+where $\epsilon_j$ are some errors, $\quad n_j\sim$ count distribution
+<br/>
+- inside the link: `formula=count ~ s(y)`
+- response distribution: `family=nb()` or `family=tw()`
+- detectability: `ddf.obj=df_hr`
+- offset, data: `segment.data=segs, observation.data=obs` 
+
+---
+# Your first DSM
+
+
+```{r firstdsm, echo=TRUE}
+library(dsm)
+dsm_x_tw <- dsm(count~s(x), ddf.obj=df,
+                segment.data=segs, observation.data=obs,
+                family=tw())
+```
+
+`dsm` is based on `mgcv` by Simon Wood
+
+
+---
+# `summary(dsm_x_tw)`
+
+```{r echo=FALSE}
+summary(dsm_x_tw)
+```
+
+---
+# Plotting
+
+.pull-left[
+```{r plotsmooth}
+par(cex=1.5, mar=c(5, 4, 1, 2) + 0.1, ps=18)
+plot(dsm_x_tw, lwd=3)
+```
+]
+
+.pull-right[
+- `plot(dsm_x_tw)`
+- Dashed lines indicate +/- 2 standard errors
+- Rug plot
+- On the link scale
+- EDF on $y$ axis
+]
+
+---
+# Adding a term
+
+- Just use `+`
+```{r xydsm, echo=TRUE}
+dsm_xy_tw <- dsm(count ~ s(x) + s(y),
+                 ddf.obj=df,
+                 segment.data=segs,
+                 observation.data=obs,
+                 family=tw())
+```
+
+---
+# `summary(dsm_xy_tw)`
+
+```{r echo=FALSE}
+summary(dsm_xy_tw)
+```
+
+---
+# Plotting
+
+```{r plotsmooth-xy1, eval=FALSE, echo=TRUE}
+plot(dsm_xy_tw, pages=1)
+```
+```{r plotsmooth-xy2, fig.width=12, echo=FALSE}
+par(cex=1.5, mar=c(5, 5, 1, 0) + 0.1)
+par(cex.axis=2, lwd=2, cex.lab=2, lwd=3)
+plot(dsm_xy_tw, pages=1, lwd=3)
+```
+- `scale=0`: each plot on different scale
+- `pages=1`: plot together
+
+---
+# Bivariate terms
+
+- Assumed an additive structure
+- No interaction
+- We can specify `s(x,y)` (and `s(x,y,z,...)`)
+
+---
+# Bivariate spatial term
+
+```{r xy-biv-dsm, echo=TRUE}
+dsm_xyb_tw <- dsm(count ~ s(x, y),
+                 ddf.obj=df,
+                 segment.data=segs,
+                 observation.data=obs,
+                 family=tw())
+```
+
+---
+# `summary(dsm_xyb_tw)`
+
+```{r echo=FALSE}
+summary(dsm_xyb_tw)
+```
+
+---
+# Plotting... erm...
+
+.pull-left[
+```{r plotsmooth-xy-biv1, eval=TRUE}
+par(cex.axis=2, lwd=2, cex.lab=2, cex=2)
+plot(dsm_xyb_tw, asp=1, lwd=3)
+```
+]
+.pull-right[
+
+```{r plotsmooth-xy-biv2, eval=FALSE, echo=TRUE}
+plot(dsm_xyb_tw)
+```
+]
+---
+# Let's try something different
+
+.pull-left[
+```{r twodee-p, echo=TRUE, eval=FALSE}
+plot(dsm_xyb_tw, select=1,
+     scheme=2, asp=1)
+```
+- Still on link scale
+- `too.far` excludes points far from data
+]
+.pull-right[
+```{r twodee, echo=FALSE}
+#par(cex.axis=1.2, lwd=2, cex.lab=1.5, cex=2)
+plot(dsm_xyb_tw, select=1, scheme=2, asp=1)
+```
+]
+
+---
+# Comparing bivariate and additive models
+
+```{r xy-x-y, fig.width=28, fig.height=15}
+dsm_xy_nb <- dsm(count~s(x,y),
+                 ddf.obj=df,
+                 segment.data=segs, observation.data=obs,
+                 family=nb())
+dsm_x_y_nb <- dsm(count~s(x) +s(y),
+                  ddf.obj=df,
+                  segment.data=segs, observation.data=obs,
+                  family=nb())
+par(cex.axis=1.2, cex.main=4, lwd=2, cex.lab=1.8, cex=2, mfrow=c(1,2))
+vis.gam(dsm_xy_nb, plot.type = "contour", view=c("x","y"), zlim = c(-11,1), too.far=0.1, asp=1, main="Bivariate")
+vis.gam(dsm_x_y_nb, plot.type = "contour", view=c("x","y"), zlim = c(-11,1), too.far=0.1, asp=1, main="Additive")
+```
+
+---
+
+class: inverse, middle, center
+
+# Let's have a go...
+
+
