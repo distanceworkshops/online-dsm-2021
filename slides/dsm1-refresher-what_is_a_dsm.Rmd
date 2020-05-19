@@ -459,6 +459,10 @@ p_maptr <- ggplot()+
 print(p_maptr)
 ```
 
+```{r save-mapstuff, echo=FALSE}
+save(usa, tracks, file="geosave.RData")
+```
+
 ---
 
 
@@ -622,19 +626,14 @@ class: inverse, middle, center
 # Detection information
 
 ---
-
 # Including detection information
-
 
 - Two options:
   - adjust areas to account for **effective effort**
   - use **Horvitz-Thompson estimates** as response
 
-
 ---
-
-# Effective effort
-
+# Count model `count~...`
 
 - Area of each segment, $A_j$
   - use $A_j\hat{p}_j$
@@ -646,8 +645,7 @@ class: inverse, middle, center
 ![](images/esw_change.png)
 
 ---
-
-# Estimated abundance
+# Estimated abundance `abundance.est~...`
 
 - Effort is area of each segment
 - Estimate H-T abundance per segment
@@ -661,9 +659,7 @@ $$
 ![](images/Nhat_change.png)
 
 ---
-
 # Detectability and covariates
-
 
 - 2 covariate "levels" in detection function
   - "Observer"/"observation" -- change **within** segment
@@ -671,28 +667,19 @@ $$
 - "Count model" only lets us use segment-level covariates
 - "Estimated abundance" lets us use either
 
-
 ---
-
 # When to use each approach?
-
 
 - Generally "nicer" to adjust effort
 - Keep response (counts) close to what was observed
 - **Unless** you want observation-level covariates
 
-
-
 ---
-
 class: inverse, middle, center
-
 # Data requirements
 
 ---
-
 # What do we need?
-
 
 - Need to "link" data
   - ✅ Distance data/detection function

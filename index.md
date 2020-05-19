@@ -24,10 +24,16 @@ The course will consist of 5 live sessions delivered over videoconference. Betwe
 
 ## Schedule
 
+Links in the "Part" column below will take you to the corresponding slides or practicals. These are HTML pages, but you might find it useful to "Print to PDF" for annotation (usually within the Print menu in your browser). Slides are numbered to help orientate yourselves.
+
+For the practicals you need [`spermwhale.RData`](data/spermwhale.RData), which contains all the R objects you will need (see below for R package requirements).
+
+Practicals are provided in RMarkdown format. If you aren't familiar with RMarkdown [here is a quick introduction from RStudio](https://rmarkdown.rstudio.com/lesson-1.html) (you only need to read the first 4 sections to know enough for this course).
+
+
 Session     | Part      | Description
 ------------|-----------|--------------
-*Monday*    | Lecture   | Introductions
-            |           | Distance sampling refresher
+*Monday*    | Lecture   | Distance sampling refresher
             |           | What is a DSM?
             |           | Getting to know the data
             | Practical | Detection function fitting
@@ -71,6 +77,7 @@ Note that this might take a while depending on your internet connection speed.
 
 ## Additional resources
 
+- [Reading list for this course](reading_list.html). List of useful papers, reports, websites and books to follow-up on.
 - ["An Introduction to R" online book from Aberdeen University](https://alexd106.github.io/Rbook/)
 - [Distance sampling online](https://workshops.distancesampling.org/online-course/) free video lectures on distance sampling from CREEM
 - ["Distance sampling: methods and applications" book](https://www.springer.com/us/book/9783319192185) good overview of most of distance sampling. If your institution has a Springer account the ebook may be free for you and you can order a "MyCopy" paper version (softback, no colour figures) for $25.
