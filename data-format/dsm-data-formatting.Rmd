@@ -126,11 +126,12 @@ transects <- read_sf("data/ri_transects.shp")
 p <- ggplot() +
   # geom_sf knows what to do with spatial data
   geom_sf(data=coastline) +
-  geom_sf(data=transects) +
+  geom_sf(data=transects, aes(colour=Transect)) +
   # chop to be on a better scale
   coord_sf(xlim=c(-72, -70.8), ylim=c(40.8, 41.5), expand=FALSE) +
   # make the plot look simpler
   theme_minimal()
+
 print(p)
 ```
 
@@ -144,10 +145,18 @@ transects
 
 We have one row per transect (for a total of 24 transects), each of which consists of a line joining the start and end points that make up the transects. If we want we can plot individual rows via `plot(transects[1,])`; this can be useful to check that each row is a single line or if further processing is needed (this can be tricky and is not covered in this tutorial but see "More information" below).
 
-This data looks in good shape, so we can use the `st_segmentize` function to take each transect and make segments from them.
+This data looks in good shape, so we can use the `st_segmentize` function to take each transect and make segments from them. To make sure everything works correctly, we need to project the data first. Here I'm using EPSG code 6348 which is the Rhode Island State Plane.
 
 ```{r}
-segs <- st_segmentize(transects, dfMaxLength=units::set_units(2000, m))
+# project transects
+transects <- st_transform(transects, 6348)
+
+# do the segmenting
+segs <- st_segmentize(transects, dfMaxLength=units::set_units(2000, "metres"))
+
+# transform back to lat/long
+segs <- st_transform(segs, 4326)
+transects <- st_transform(transects, 4326)
 ```
 
 Here we know the truncation used for the detection function was 1000m (the distances were collected in bins and this was the further bin), and since we're trying to make our segments approximately square, we set the length to be twice that (since the truncation applies to either side of the transect), so 2000m.
@@ -158,7 +167,68 @@ Looking at what that did:
 segs
 ```
 
-We now have 508 segments each about 2km long. We can check the lengths using the `st_length` function and plot a histogram of the segment lengths:
+See now that each row has many coordinates attached to it, just looking at the first row (transect 1) and comparing the coordinates between `transects` and `segs`
+
+```{r transects-rowone}
+st_coordinates(transects[1,])
+```
+
+`transects` has just two coordinates in it (the start and end points of the line). Whereas:
+
+```{r segs-rowone}
+st_coordinates(segs[1,])
+```
+
+`segs` has 5, corresponding to our segment cut points.
+
+We now need to break up the rows of `segs` into multiple rows, one per segment. This is a bit fiddly. We use a function provided by [`dieghernan`](https://dieghernan.github.io) on [their site](https://dieghernan.github.io/201905_Cast-to-subsegments/) to do this. We first load the function (don't worry about understanding the code!):
+
+```{r cast-to-subsegs-function}
+stdh_cast_substring <- function(x, to = "MULTILINESTRING") {
+  ggg <- st_geometry(x)
+
+  if (!unique(st_geometry_type(ggg)) %in% c("POLYGON", "LINESTRING")) {
+    stop("Input should be  LINESTRING or POLYGON")
+  }
+  for (k in 1:length(st_geometry(ggg))) {
+    sub <- ggg[k]
+    geom <- lapply(
+      1:(length(st_coordinates(sub)[, 1]) - 1),
+      function(i)
+        rbind(
+          as.numeric(st_coordinates(sub)[i, 1:2]),
+          as.numeric(st_coordinates(sub)[i + 1, 1:2])
+        )
+    ) %>%
+      st_multilinestring() %>%
+      st_sfc()
+
+    if (k == 1) {
+      endgeom <- geom
+    }
+    else {
+      endgeom <- rbind(endgeom, geom)
+    }
+  }
+  endgeom <- endgeom %>% st_sfc(crs = st_crs(x))
+  if (class(x)[1] == "sf") {
+    endgeom <- st_set_geometry(x, endgeom)
+  }
+  if (to == "LINESTRING") {
+    endgeom <- endgeom %>% st_cast("LINESTRING")
+  }
+  return(endgeom)
+}
+```
+
+We can then use it to separate the segments and look at the results: 
+
+```{r run-subseg}
+segs <- stdh_cast_substring(segs, to="LINESTRING")
+segs
+```
+
+We now have `r nrow(segs)` segments between 1km and 2km long. We can check the lengths using the `st_length` function and plot a histogram of the segment lengths:
 
 ```{r length-segs}
 hist(st_length(segs), xlab="Segment lengths (m)", main="")
@@ -202,14 +272,24 @@ Now we can check that looks right:
 segs
 ```
 
-With the required columns taken care of, we can also calculate the centroids of our segments to get the locations of each segment to use in the spatial model. Handily we can use `st_centroid` to do this in one step and keep all our data at the same time:
+With the required columns taken care of, we can also calculate the centroids of our segments to get the locations of each segment to use in the spatial model. Handily we can use `st_centroid` to do this in one step and keep all our data at the same time.
+
+We get a warning about how centroids might not be calculated correctly when latitude/longitude are used (as I'm doing here). So again we project the data (to Rhode Island State Plane) for this step using `st_transform`.
 
 ```{r centroid-locs}
+# project segs
+segs <- st_transform(segs, 6348)
+
+# find centroids
 segs <- st_centroid(segs)
+
+# project back to lat/long
+segs <- st_transform(segs, 4326)
+
+# how does that look?
 segs
 ```
 
-Here we get a warning about how centroids might not be calculated correctly when latitude/longitude are used (as I'm doing here). I recommend projecting the data before this step using `st_transform`.
 
 Notice that our `geometry type` is now `POINT`. We can plot these centroids on our previous map:
 
@@ -291,10 +371,22 @@ p <- ggplot() +
 print(p)
 ```
 
-Going back to our `segs` object above, we can use the `st_join` function, using the `st_nearest_feature` function to control when the tables are linked:
+Going back to our `segs` object above, we can use the `st_join` function, using the `st_nearest_feature` function to control when the tables are linked. Again, we need to project the data to avoid issues.
 
 ```{r}
+# project segs
+segs <- st_transform(segs, 6348)
+obs <- st_transform(obs, 6348)
+
+# do the join
 obs <- st_join(obs, segs, join=st_nearest_feature)
+
+
+# project back to lat/long
+segs <- st_transform(segs, 4326)
+obs <- st_transform(obs, 4326)
+
+# how does that look?
 obs
 ```
 
