@@ -172,7 +172,7 @@ Two popular approaches (using $p$-values)
 - Reported in `summary`
 
 ---
-# 
+# `summary(dsm_all)`
 
 ```{r p-summary}
 summary(dsm_all)
@@ -189,9 +189,7 @@ summary(dsm_all)
 This isn't very satisfactory!
 
 ---
-
 # Term selection during fitting
-
 
 ```{r term-select, results="hide"}
 dats <- dsm_all$dat
@@ -238,9 +236,7 @@ saveGIF(plot_lambda(G, bestlambda), "shrinky_dink.gif", interval=0.2)
 
 
 ---
-
 # Shrinkage approach
-
 
 ```{r term-select-ts, results="hide"}
 dats <- dsm_all$dat
@@ -277,8 +273,6 @@ saveGIF(plot_lambda(G, bestlambda), "shrinky_dink_ts.gif", interval=0.2)
 .pull-right[
 ![animation of penalty in action](images/shrinky_dink_ts.gif)
 ]
-
-
 
 ---
 # Shrinkage example
