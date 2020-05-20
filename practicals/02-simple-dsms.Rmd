@@ -1,0 +1,153 @@
+---
+title: Spatially explicit models for distance sampling data
+author: David L Miller
+subtitle: "Practical 2: Simple density surface models"
+date: 8-12 June 2020
+
+---
+
+## Aims
+
+By the end of this practical, you should feel comfortable:
+
+- Fitting a density surface model using `dsm()`
+- Understanding what the objects that go into a `dsm()` call
+- Understanding the role of the response in the `formula=` argument
+- Understanding the output of `summary()` when called on a `dsm` object
+- Increasing the `k` parameter of smooth terms to increase their flexibility
+
+The example code below uses the `df_hn` detection function in the density surface models. You can substitute this for your own best model as you go, or copy and paste the code at the end and see what results you get using your model for the detection function.
+
+In this practical, we're just going to do basic comparisons looking at plots and `summary` output. We'll get more into model comparison in later practicals.
+
+## Load the packages and data
+
+
+```{r load-packages-02}
+library(Distance)
+library(dsm)
+library(ggplot2)
+library(knitr)
+```
+
+Loading sperm whale data again and the `RData` files where we saved our results:
+```{r load-data-02}
+load("spermwhale.RData")
+load("df-models.RData")
+```
+
+## Pre-model fitting
+
+Before we fit a model using `dsm()` we must first remove the observations from the spatial data that we excluded when we fitted the detection function -- those observations at distances greater than the truncation.
+
+```{r truncate-obs-02}
+obs <- obs[obs$distance <= df_hn$ddf$meta.data$width, ]
+```
+
+Here we've used the value of the truncation stored in the detection function object, but we could also use the numeric value (which we can also find by checking the detection function's `summary()`).
+
+(If we don't do this, the DSM will still fit fine, we just get a warning.)
+
+## Fitting DSMs
+
+Using the data that we've saved so far, we can build a call to the `dsm()` function and fit out first density surface model. Here we're only going to look at models that include spatial smooths.
+
+Let's start with a very simple model -- a bivariate smooth of `x` and `y`:
+
+```{r nb-xy-02}
+dsm_nb_xy <- dsm(count~s(x, y, k=25),
+                 ddf.obj=df_hn, segment.data = segs, observation.data=obs,
+                 family=nb())
+```
+
+Note again that we try to have informative model object names so that we can work out what the main features of the model were from its name alone.
+
+We can look at a `summary()` of this model. Look through the summary output and try to pick out the important information based on what we've talked about in the lectures so far.
+```{r nb-xy-summary}
+summary(dsm_nb_xy)
+```
+
+Things to look for:
+
+- Was the bivariate smooth of space (`s(x, y)`) significant at the highest level?
+- What was the effective degrees of freedom (EDF) for this model? How does that compare with the `k` we provided?
+- Does the number of observations (`n=`) match the number of rows in `segs`?
+
+
+
+### Visualising output
+
+As discussed in the lectures, the `plot` output is not terribly useful for bivariate smooths like these. We'll use `vis.gam()` to visualise the smooth instead:
+
+```{r nb-xy-visgam, fig.width=5, fig.height=5, fig.cap="Fitted surface (on link scale) for s(x,y)"}
+vis.gam(dsm_nb_xy, view=c("x","y"), plot.type="contour", 
+        too.far=0.1, main="s(x,y) (link scale)", asp=1)
+```
+
+Notes:
+
+1. The plot is on the scale of the link function, the offset is not taken into account -- the contour values do not represent abundance!
+2. We set `view=c("x","y")` to display the smooths for `x` and `y` (we can choose any two variables in our model to display like this)
+3. `plot.type="contour"` gives this "flat" plot, set `plot.type="persp"` for a "perspective" plot, in 3D.
+4. The `too.far=0.1` argument displays the values of the smooth not "too far" from the data (try changing this value to see what happens).
+5. `asp=1` ensures that the aspect ratio of the plot is 1, making the pixels square.
+6. Read the `?vis.gam` manual page for more information on the plotting options.
+
+### Setting basis complexity
+
+We can set the basis complexity via the `k` argument to the `s()` term in the formula. For example the following re-fits the above model with a much smaller basis complexity than before:
+
+```{r nb-xy-smallk}
+dsm_nb_xy_smallk <- dsm(count~s(x, y, k=10),
+                        ddf.obj=df_hn, segment.data = segs,
+                        observation.data=obs,
+                        family=nb())
+```
+
+Compare the output of `vis.gam()` for this model to the model with a larger basis complexity.
+
+
+## Univariate models
+
+Instead of fitting a bivariate smooth of `x` and `y` using `s(x, y)`, we could instead use the additive nature and fit the following model:
+
+```{r additive-xy-nb}
+dsm_nb_x_y <- dsm(count~s(x)+ s(y),
+                 ddf.obj=df_hn, segment.data = segs, observation.data=obs,
+                 family=nb())
+```
+
+Compare this model with `dsm_nb_xy` using `vis.gam()` and `summary()`.
+
+## Tweedie response distribution
+
+So far, we've used `nb()` as the response -- the negative binomial distribution. We can also try out the Tweedie distribution as a response by replacing `nb()` with `tw()`.
+
+Try this out and compare the results.
+
+# Estimated abundance as response
+
+So far we've just used `count` as the response. That is, we adjusted the offset of the model to make it take into account the "effective area" of the segments (see lecture notes for a refresher).
+
+Instead of using `count` we could use `abundance.est`, which will leave the segment areas as they are and calculate the Horvitz-Thompson estimates of the abundance per segment and use that as the response in the model. This is most useful when we have covariates in the detection function (though we can use it any time).
+
+Try copying the code that fits the model `dsm_nb_xy` and make a model `dsm_nb_xy_ae` that replaces `count` for `abundance.est` in the model formula and uses the `df_hr_ss_size` detection function. Compare the results of `summary` and `plot` output between this and the count model.
+
+
+
+## Save models
+
+It'll be interesting to see how these models compare to the more complex models we'll see later on. Let's save the fitted models at this stage (add your own models to this list so you can use them later).
+
+```{r save-models-02}
+# add your models here
+save(dsm_nb_x_y, dsm_nb_xy,
+     file="dsms-xy.RData")
+```
+
+## Extra credit
+
+If you have time, try the following:
+
+- Make the `k` value very big (~100 or so), what do you notice?
+
