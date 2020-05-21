@@ -435,3 +435,7 @@ This information is summarized at `?"dsm-data"` in the `dsm` package. It may als
 It is hard to give very general information on how to segment lines, as to some extent it depends on how the data were originally formatted (going all the way back to the make and model of the GPS unit used). More information on dealing with spatial data in R using the `sf` package is available at [the R spatial website](https://r-spatial.github.io/sf/) (see the "Articles" drop down in the header).
 
 Another source of help is the [distance sampling mailing list](https://groups.google.com/forum/#!topic/distance-sampling/). Be sure to search the archives prior to posting as there have been several threads on segmenting previously that might be helpful.
+
+# Acknowledgements
+
+Thanks to Phil Bouchet for providing helpful comments to an early version of this document and to Iúri Correia for finding an important bug.
