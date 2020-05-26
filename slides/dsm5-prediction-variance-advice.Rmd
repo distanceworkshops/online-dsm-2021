@@ -37,7 +37,7 @@ options(width = 60)
 
 class: title-slide, inverse, center, middle
 
-# Predictions<br/>and<br/>variance
+# Lecture 5: Predictions<br/>and<br/>variance
 
 <div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px">
 <img src="images/02-foundation-vertical-white.png" height="200">
@@ -558,6 +558,7 @@ class: inverse, center, middle
 # Resources
 
 - [Course reading list](http://workshops.distancesampling.org/online-dsm-2020/reading_list.html) has pointers to these topics
+- [DenMod wiki](https://osf.io/5eza8/wiki/home/) with FAQ and more
 - Distance sampling Google Group
   - Friendly, helpful, low traffic
   - see [distancesampling.org/distancelist.html](http://distancesampling.org/distancelist.html)

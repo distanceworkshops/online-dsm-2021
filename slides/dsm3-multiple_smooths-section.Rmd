@@ -35,13 +35,11 @@ theme_set(theme_cowplot(20))
 
 class: title-slide, inverse, center, middle
 
-# Multivariate smoothing<br/>&<br/>model selection
+# Lecture 3: Multivariate smoothing<br/>&<br/>model selection
 <div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px">
 <img src="images/02-foundation-vertical-white.png" height="200">
 </div>
 ---
-
-
 
 ```{r initialmodeletc, echo=FALSE, message=FALSE, warning=FALSE}
 load("../data/spermwhale.RData")

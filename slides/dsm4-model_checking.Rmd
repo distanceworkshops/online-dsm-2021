@@ -33,7 +33,7 @@ theme_set(theme_cowplot(20))
 
 class: title-slide, inverse, center, middle
 
-# Model checking
+# Lecture 4: Model checking
 <div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px">
 <img src="images/02-foundation-vertical-white.png" height="200">
 </div>

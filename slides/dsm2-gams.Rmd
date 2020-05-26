@@ -30,7 +30,6 @@ library(cowplot)
 theme_set(theme_cowplot(20))
 ```
 
-
 # Lecture 2 : Generalized Additive Models
 
 <div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px">
@@ -38,11 +37,6 @@ theme_set(theme_cowplot(20))
 </div>
 
 ---
-
-
-
-
-
 ```{r initialmodeletc, echo=FALSE, message=FALSE, warning=FALSE}
 load("../data/spermwhale.RData")
 library(Distance)
@@ -59,7 +53,6 @@ dsm_tw_xy_depth <- dsm(count ~ s(x, y) + s(Depth), ddf.obj=df, observation.data=
 - Fitting GAMs using `dsm`
 
 ---
-
 # Building a model, from scratch
 
 - Know count $n_j$ in segment $j$
@@ -78,7 +71,6 @@ $$
 - $\color{green}{\exp}$ is the *link function*
 
 ---
-
 # Building a model, from scratch
 
 - What about area and detectability?
@@ -89,9 +81,7 @@ $$
 - $\color{red}{A_j}$ area of segment - "offset"
 - $\color{blue}{\hat{p}_j}$ probability of detection in segment
 
-
 ---
-
 # Building a model, from scratch
 
 - It's a statistical model so:
@@ -104,14 +94,11 @@ $$
 
 ---
 class: inverse, center, middle
-
 # That's a Generalized Additive Model!
 
 ---
 class: inverse, center, middle
-
 # Now let's look at each bit...
-
 
 ---
 # Response
@@ -121,7 +108,6 @@ $$
 $$
 <br/>
 where $\epsilon_j$ are some errors, $\quad \color{red}{n_j\sim \text{count distribution}}$
-
 
 ---
 # Count distributions
@@ -143,9 +129,7 @@ hist(dsm_tw_xy_depth$data$count[dsm_tw_xy_depth$data$count>0],
 ]
 
 ---
-
 # Tweedie distribution
-
 
 .pull-left[
 ```{r tweedie}
@@ -180,9 +164,7 @@ legend(x="topright", legend=p, fill=rr, inset=0.05)
 ]
 
 ---
-
 # Negative binomial distribution
-
 
 .pull-left[
 ```{r negbin}
@@ -221,7 +203,6 @@ legend(x="topright", legend=disps, fill=rr, inset=0.05)
 ---
 # Smooths
 
-
 $$
 n_j = A_j\hat{p}_j \exp\left[ \beta_0 + \color{red}{s(\text{y}_j) + s(\text{Depth}_j}) \right] + \epsilon_j
 $$
@@ -230,7 +211,6 @@ where $\epsilon_j$ are some errors, $\quad n_j\sim$ count distribution
 
 ---
 # What about these "s" things?
-
 
 .pull-left[
 ```{r wiggles}
