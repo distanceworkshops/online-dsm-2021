@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lecture 2: Generalized Additive Models</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="David L Miller (@millerdl)" />
+    <script src="libs/header-attrs-2.1/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="custom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+# Lecture 2 : Generalized Additive Models
+
+&lt;div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px"&gt;
+&lt;img src="images/02-foundation-vertical-white.png" height="200"&gt;
+&lt;/div&gt;
+
+---
+
+
+# Overview
+
+- The count model, from scratch
+- What is a GAM?
+- What is smoothing?
+- Fitting GAMs using `dsm`
+
+---
+# Building a model, from scratch
+
+- Know count `\(n_j\)` in segment `\(j\)`
+- Want :
+
+$$
+n_j = f( [\text{environmental covariates}]_j)
+$$
+
+- Additive model of smooths `\(s\)`:
+
+$$
+n_j = \color{green}{\exp} \left[ \color{grey}{ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j)} \right]
+$$
+- `\(\color{grey}{\text{model terms}}\)`
+- `\(\color{green}{\exp}\)` is the *link function*
+
+---
+# Building a model, from scratch
+
+- What about area and detectability?
+$$
+n_j = \color{red}{A_j}\color{blue}{\hat{p}_j}\color{green}{\exp} \left[ \color{grey}{ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j)} \right]
+$$
+
+- `\(\color{red}{A_j}\)` area of segment - "offset"
+- `\(\color{blue}{\hat{p}_j}\)` probability of detection in segment
+
+---
+# Building a model, from scratch
+
+- It's a statistical model so:
+$$
+n_j = \color{red}{A_j}\color{blue}{\hat{p}_j}\color{green}{\exp} \left[ \color{grey}{ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j)}\right] + \epsilon_j
+$$
+
+- `\(n_j\)` has a distribution (count)
+- `\(\epsilon_j\)` are errors (differences between model and observations)
+
+---
+class: inverse, center, middle
+# That's a Generalized Additive Model!
+
+---
+class: inverse, center, middle
+# Now let's look at each bit...
+
+---
+# Response
+
+$$
+\color{red}{n_j} = A_j\hat{p}_j \exp\left[ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j) \right] + \epsilon_j
+$$
+&lt;br/&gt;
+where `\(\epsilon_j\)` are some errors, `\(\quad \color{red}{n_j\sim \text{count distribution}}\)`
+
+---
+# Count distributions
+
+.pull-left[
+![](dsm2-gams_files/figure-html/countshist-1.svg)&lt;!-- --&gt;
+]
+
+.pull-right[
+- Response is a count
+- Often, it's mostly zero
+- Flexible mean-variance relationship
+- (Poisson isn't good at this)
+]
+
+---
+# Tweedie distribution
+
+.pull-left[
+![](dsm2-gams_files/figure-html/tweedie-1.svg)&lt;!-- --&gt;
+(NB there is a point mass at zero not plotted)
+]
+.pull-right[
+-  `\(\text{Var}\left(\text{count}\right) = \phi\mathbb{E}(\text{count})^q\)`
+- Poisson is `\(q=1\)` 
+- We estimate `\(q\)` and `\(\phi\)` 
+]
+
+---
+# Negative binomial distribution
+
+.pull-left[
+![](dsm2-gams_files/figure-html/negbin-1.svg)&lt;!-- --&gt;
+]
+.pull-right[
+- `\(\text{Var}\left(\text{count}\right) =\)` `\(\mathbb{E}(\text{count}) + \kappa \mathbb{E}(\text{count})^2\)`
+- Estimate `\(\kappa\)`
+- (Poisson: `\(\text{Var}\left(\text{count}\right) =\mathbb{E}(\text{count})\)`) 
+]
+
+---
+# Smooths
+
+$$
+n_j = A_j\hat{p}_j \exp\left[ \beta_0 + \color{red}{s(\text{y}_j) + s(\text{Depth}_j}) \right] + \epsilon_j
+$$
+&lt;br/&gt;
+where `\(\epsilon_j\)` are some errors, `\(\quad n_j\sim\)` count distribution
+
+---
+# What about these "s" things?
+
+.pull-left[
+![](dsm2-gams_files/figure-html/wiggles-1.svg)&lt;!-- --&gt;
+]
+.pull-right[
+- *Think* `\(s\)`=**smooth**
+- Want a line that is "close" to all the data
+- Balance between interpolation and "fit"
+]
+
+
+---
+class: inverse, middle, center
+# What is smoothing?
+
+---
+# Smoothing
+
+- We think underlying phenomenon is *smooth*
+  - "Abundance is a smooth function of depth"
+- 1, 2 or more dimensions
+
+&lt;img src="dsm2-gams_files/figure-html/examplesmooths-1.svg" width="800" /&gt;
+
+---
+# Smoothing
+
+.pull-left[
+- Estimate smooths
+- We set:
+  - "type": *bases* (made up of *basis functions*)
+  - basis size/dimension/complexity -- *maximum wigglyness*
+- Automatically
+  - *estimate how wiggly it needs to be*
+]
+.pull-right[
+![](dsm2-gams_files/figure-html/wiggles-plot2-1.svg)&lt;!-- --&gt;
+]
+---
+
+# Splines
+
+.pull-left[
+![](dsm2-gams_files/figure-html/unnamed-chunk-1-1.svg)&lt;!-- --&gt;
+]
+.pull-right[
+
+- Functions made of other, simpler functions
+- **Basis functions** `\(b_k\)`, estimate `\(\beta_k\)` 
+- `\(s(x) = \sum_{k=1}^K \beta_k b_k(x)\)`
+]
+
+---
+# Measuring wigglyness
+
+- Visually:
+  - Lots of wiggles `\(\Rightarrow\)` *not smooth*
+  - Straight line `\(\Rightarrow\)` *very smooth*
+
+
+![](dsm2-gams_files/figure-html/wiggles-plot-1.svg)&lt;!-- --&gt;
+
+
+---
+
+# How wiggly are things?
+
+
+- Set **basis complexity** or "size" `\(k\)`
+- Fitted smooths have **effective degrees of freedom** (EDF)
+- Set `\(k\)` "large enough"
+
+![](dsm2-gams_files/figure-html/wiggles-plot-EDF-1.svg)&lt;!-- --&gt;
+
+---
+# Getting more out of GAMs
+
+.pull-left[
+![](images/igam.jpg)
+]
+
+.pull-right[
+- I can't teach you all of GAMs in 1 week
+- Good intro book
+- (also a good textbook on GLMs and GLMMs)
+- Quite technical in places
+- More resources on course website
+]
+
+
+---
+class: inverse, middle, center
+# Fitting GAMs using dsm
+
+---
+# Translating maths into R
+
+$$
+n_j = A_j\hat{p}_j \exp\left[ \beta_0 + s(\text{y}_j) \right] + \epsilon_j
+$$
+&lt;br/&gt;
+where `\(\epsilon_j\)` are some errors, `\(\quad n_j\sim\)` count distribution
+&lt;br/&gt;
+- inside the link: `formula=count ~ s(y)`
+- response distribution: `family=nb()` or `family=tw()`
+- detectability: `ddf.obj=df_hr`
+- offset, data: `segment.data=segs, observation.data=obs` 
+
+---
+# Your first DSM
+
+
+
+```r
+library(dsm)
+dsm_x_tw &lt;- dsm(count~s(x), ddf.obj=df,
+                segment.data=segs, observation.data=obs,
+                family=tw())
+```
+
+`dsm` is based on `mgcv` by Simon Wood
+
+
+---
+# `summary(dsm_x_tw)`
+
+
+```
+## 
+## Family: Tweedie(p=1.326) 
+## Link function: log 
+## 
+## Formula:
+## count ~ s(x) + offset(off.set)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -19.8115     0.2277  -87.01   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##        edf Ref.df     F  p-value    
+## s(x) 4.962  6.047 6.403 1.07e-06 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## R-sq.(adj) =  0.0283   Deviance explained = 17.9%
+## -REML = 409.94  Scale est. = 6.0413    n = 949
+```
+
+---
+# Plotting
+
+.pull-left[
+![](dsm2-gams_files/figure-html/plotsmooth-1.svg)&lt;!-- --&gt;
+]
+
+.pull-right[
+- `plot(dsm_x_tw)`
+- Dashed lines indicate +/- 2 standard errors
+- Rug plot
+- On the link scale
+- EDF on `\(y\)` axis
+]
+
+---
+# Adding a term
+
+- Just use `+`
+
+```r
+dsm_xy_tw &lt;- dsm(count ~ s(x) + s(y),
+                 ddf.obj=df,
+                 segment.data=segs,
+                 observation.data=obs,
+                 family=tw())
+```
+
+---
+# `summary(dsm_xy_tw)`
+
+
+```
+## 
+## Family: Tweedie(p=1.306) 
+## Link function: log 
+## 
+## Formula:
+## count ~ s(x) + s(y) + offset(off.set)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -20.0908     0.2381  -84.39   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##        edf Ref.df     F  p-value    
+## s(x) 4.943  6.057 3.224 0.004239 ** 
+## s(y) 5.293  6.419 4.034 0.000322 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## R-sq.(adj) =  0.0678   Deviance explained = 27.4%
+## -REML = 399.84  Scale est. = 5.3157    n = 949
+```
+
+---
+# Plotting
+
+
+```r
+plot(dsm_xy_tw, pages=1)
+```
+![](dsm2-gams_files/figure-html/plotsmooth-xy2-1.svg)&lt;!-- --&gt;
+- `scale=0`: each plot on different scale
+- `pages=1`: plot together
+
+---
+# Bivariate terms
+
+- Assumed an additive structure
+- No interaction
+- We can specify `s(x,y)` (and `s(x,y,z,...)`)
+
+---
+# Bivariate spatial term
+
+
+```r
+dsm_xyb_tw &lt;- dsm(count ~ s(x, y),
+                 ddf.obj=df,
+                 segment.data=segs,
+                 observation.data=obs,
+                 family=tw())
+```
+
+---
+# `summary(dsm_xyb_tw)`
+
+
+```
+## 
+## Family: Tweedie(p=1.29) 
+## Link function: log 
+## 
+## Formula:
+## count ~ s(x, y) + offset(off.set)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -20.2745     0.2477  -81.85   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##          edf Ref.df     F  p-value    
+## s(x,y) 16.89  21.12 4.333 3.73e-10 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## R-sq.(adj) =  0.102   Deviance explained = 34.7%
+## -REML = 394.86  Scale est. = 4.8248    n = 949
+```
+
+---
+# Plotting... erm...
+
+.pull-left[
+![](dsm2-gams_files/figure-html/plotsmooth-xy-biv1-1.svg)&lt;!-- --&gt;
+]
+.pull-right[
+
+
+```r
+plot(dsm_xyb_tw)
+```
+]
+---
+# Let's try something different
+
+.pull-left[
+
+```r
+plot(dsm_xyb_tw, select=1,
+     scheme=2, asp=1)
+```
+- Still on link scale
+- `too.far` excludes points far from data
+]
+.pull-right[
+![](dsm2-gams_files/figure-html/twodee-1.svg)&lt;!-- --&gt;
+]
+
+---
+# Comparing bivariate and additive models
+
+![](dsm2-gams_files/figure-html/xy-x-y-1.svg)&lt;!-- --&gt;
+
+---
+
+class: inverse, middle, center
+
+# Let's have a go...
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-MML-AM_HTMLorMML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

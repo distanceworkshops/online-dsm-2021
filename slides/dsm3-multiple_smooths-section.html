@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Multivariate smoothing, model selection</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="David L Miller (@millerdl)" />
+    <script src="libs/header-attrs-2.1/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="custom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+class: title-slide, inverse, center, middle
+
+# Lecture 3: Multivariate smoothing&lt;br/&gt;&amp;&lt;br/&gt;model selection
+&lt;div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px"&gt;
+&lt;img src="images/02-foundation-vertical-white.png" height="200"&gt;
+&lt;/div&gt;
+---
+
+
+
+# The story so far...
+
+- How GAMs work
+- How to include detection info
+- Simple spatial-only models
+
+---
+# Life isn't that simple
+
+- Which enivronmental covariates?
+- Which response distribution?
+- Which response?
+
+&lt;p align="center"&gt;&lt;b&gt;How to select between possible models?&lt;/b&gt;&lt;/p&gt;
+
+---
+class: inverse, middle, center
+# Adding covariates
+
+---
+# Model formulation
+
+- Pure spatial, pure environmental, mixed?
+- Prior knowledge of biology/ecology of species
+- What are drivers of distribution?
+- What data is available?
+
+---
+# Sperm whale covariates
+
+&lt;img src="dsm3-multiple_smooths-section_files/figure-html/plotall-1.png" height="800" /&gt;
+
+---
+class: inverse, middle, center
+# Tobler's first law of geography
+
+## *"Everything is related to everything else, but near things are more related than distant things"*
+
+### Tobler (1970)
+
+---
+# Implications of Tobler's law
+
+![](dsm3-multiple_smooths-section_files/figure-html/pairrrrs-1.png)&lt;!-- --&gt;
+
+---
+# Adding smooths
+
+- Already know that `+` is our friend
+- Can build a big model...
+
+
+```r
+dsm_all &lt;- dsm(count~s(x, y) +
+                     s(Depth) +
+                     s(DistToCAS) +
+                     s(SST) +
+                     s(EKE) +
+                     s(NPP),
+                  ddf.obj=df_hr,
+                  segment.data=segs, observation.data=obs,
+                  family=tw())
+```
+
+---
+# Each `s()` has its own options
+
+- `s(..., k=...)` to adjust basis size
+- `s(..., bs="...")` for basis type
+- lots more options (we'll see a few here)
+
+---
+class: inverse, middle, center
+
+# Now we have a huge model, what do we do?
+
+---
+# Term selection
+
+.pull-left[
+Two popular approaches (using `\(p\)`-values)
+
+**Stepwise selection** - path dependence
+
+**All possible subsets** - computationally expensive (fishing?)
+]
+.pull-right[
+&lt;img src="images/gnome.jpg"&gt;
+]
+
+---
+# p-values
+
+- Test for *zero effect* of a smooth
+- They are **approximate** for GAMs (but useful)
+- Reported in `summary`
+
+---
+# `summary(dsm_all)`
+
+
+```
+## 
+## Family: Tweedie(p=1.25) 
+## Link function: log 
+## 
+## Formula:
+## count ~ s(x, y) + s(Depth) + s(DistToCAS) + s(SST) + s(EKE) + 
+##     s(NPP) + offset(off.set)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -20.6368     0.2751     -75   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##                edf Ref.df     F p-value    
+## s(x,y)       5.225  7.153 1.233  0.2920    
+## s(Depth)     3.568  4.439 6.641 1.6e-05 ***
+## s(DistToCAS) 1.000  1.000 1.504  0.2204    
+## s(SST)       5.927  6.986 2.068  0.0407 *  
+## s(EKE)       1.763  2.225 2.579  0.0695 .  
+## s(NPP)       2.393  3.068 0.856  0.4678    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## R-sq.(adj) =  0.224   Deviance explained = 44.9%
+## -REML = 368.97  Scale est. = 3.9337    n = 949
+```
+
+---
+# Path dependence is an issue here
+
+- (silly) Strategy: want all `\(p\approx 0\)` (`***`), remove terms 1-by-1
+- Two different universes appear:
+
+![](images/pathology.png)
+
+This isn't very satisfactory!
+
+---
+# Term selection during fitting
+
+
+.pull-left[
+- Already selecting wigglyness of terms
+- (via a penalty)
+- What about using it to remove the whole term?
+]
+.pull-right[
+![animation of penalty in action](images/shrinky_dink.gif)
+]
+
+
+---
+# Shrinkage approach
+
+
+.pull-left[
+- Basis `s(..., bs="ts")` - thin plate splines *with shrinkage*
+- remove the wiggles **then** remove the "linear" bits
+- nullspace should be shrunk less than the wiggly part
+]
+.pull-right[
+![animation of penalty in action](images/shrinky_dink_ts.gif)
+]
+
+---
+# Shrinkage example
+
+
+```r
+dsm_ts_all &lt;- dsm(count~s(x, y, bs="ts") +
+                        s(Depth, bs="ts") +
+                        s(DistToCAS, bs="ts") +
+                        s(SST, bs="ts") +
+                        s(EKE, bs="ts") +
+                        s(NPP, bs="ts"),
+                  ddf.obj=df_hr,
+                  segment.data=segs, observation.data=obs,
+                  family=tw())
+```
+
+---
+# Model with no shrinkage
+
+
+![](dsm3-multiple_smooths-section_files/figure-html/smooth-no-shrinkage-1.png)&lt;!-- --&gt;
+---
+# ... with shrinkage
+
+![](dsm3-multiple_smooths-section_files/figure-html/smooth-shrinkage-1.png)&lt;!-- --&gt;
+
+---
+# `summary(dsm_ts_all)`
+
+
+```
+## 
+## Family: Tweedie(p=1.277) 
+## Link function: log 
+## 
+## Formula:
+## count ~ s(x, y, bs = "ts") + s(Depth, bs = "ts") + s(DistToCAS, 
+##     bs = "ts") + s(SST, bs = "ts") + s(EKE, bs = "ts") + s(NPP, 
+##     bs = "ts") + offset(off.set)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  -20.260      0.234  -86.59   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##                    edf Ref.df     F  p-value    
+## s(x,y)       1.8875209     29 0.705 3.56e-06 ***
+## s(Depth)     3.6794182      9 4.811 2.15e-10 ***
+## s(DistToCAS) 0.0000934      9 0.000   0.6797    
+## s(SST)       0.3826654      9 0.063   0.2160    
+## s(EKE)       0.8196256      9 0.499   0.0178 *  
+## s(NPP)       0.0003570      9 0.000   0.8359    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## R-sq.(adj) =   0.11   Deviance explained = 35.1%
+## -REML = 385.04  Scale est. = 4.5486    n = 949
+```
+
+---
+# EDF comparison
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt;   &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; tp &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; ts &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; s(x,y) &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 5.2245 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1.8875 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; s(Depth) &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.5679 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.6794 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; s(DistToCAS) &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1.0001 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0001 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; s(SST) &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 5.9267 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.3827 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; s(EKE) &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1.7631 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.8196 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; s(NPP) &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2.3931 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0004 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+# Removing terms?
+
+1. EDF
+  - Terms with EDF&lt;1 may not be useful (can we remove?)
+2. non-significant `\(p\)`-value
+  - Decide on a significance level and use that as a rule
+
+(In some sense leaving "shrunk" terms in is more "consistent" in terms of variance estimation, but can be computationally annoying)
+
+---
+class: inverse, middle, center
+
+# Comparing models
+
+---
+# Comparing models
+
+- Usually have &gt;1 option
+- How can we pick?
+- Even if we have 1 model, is it any good?
+
+(This can be subtle, more in model checking tomorrow!)
+
+---
+# Akaike's "An Information Criterion"
+
+- As for many other models, we can get an AIC from our model
+- Comparison of AIC fine (but not the end of the story)
+
+
+```r
+AIC(dsm_all)
+```
+
+```
+## [1] 1238.288
+```
+
+```r
+AIC(dsm_ts_all)
+```
+
+```
+## [1] 1225.822
+```
+
+---
+class: inverse, middle, center
+# Selecting between response distributions
+
+---
+# Goodness of fit
+
+- Q-Q plots
+- Closer to the line is better
+- But what does "close" mean?
+![](dsm3-multiple_smooths-section_files/figure-html/gof-qq-1.png)&lt;!-- --&gt;
+
+---
+# Using reference bands
+
+- What is down to random variation?
+- Where does the model actually fail?
+- Resampling the response, generate bands
+
+```
+qq.gam(dsm_all, asp=1, main="Tweedie",
+       cex=5, rep=100)
+```
+
+![](dsm3-multiple_smooths-section_files/figure-html/gof-qq-ref-1.png)&lt;!-- --&gt;
+
+---
+class: inverse, middle, center
+# Which response type?
+
+---
+# Count model `count~...`
+
+- Effort is effective effort
+- Response is count per segment
+
+![](images/esw_change.png)
+
+---
+# Estimated abundance `abundance.est~...`
+
+- Effort is area of each segment
+- Response is estimated abundance per segment
+
+![](images/Nhat_change.png)
+
+---
+# When to use each approach?
+
+- *Practical choice*
+- 2 detection function covariate "levels"
+  - "Observer"/"observation" -- change **within** segment
+  - "Segment" -- change **between** segments
+- "Count model" only lets us use segment-level covariates
+- "Estimated abundance" lets us use either
+
+---
+# Sperm whale response example (either)
+
+.pull-left[
+- Detection covariate: Beaufort
+- Changes at segment level
+- `count` or `abundance.est`
+]
+
+.pull-right[
+![](dsm3-multiple_smooths-section_files/figure-html/plot-beauf-1.png)&lt;!-- --&gt;
+]
+
+---
+# Sperm whale response example (`abundance.est`)
+
+.pull-left[
+- Detection covariate: group size (`size`)
+- Changes at observation level
+- `abundance.est` only
+]
+
+.pull-right[
+![](dsm3-multiple_smooths-section_files/figure-html/plot-size-1.png)&lt;!-- --&gt;
+]
+
+
+---
+class: inverse, middle, center
+# Recap
+
+---
+# Recap
+
+- Adding smooths
+- Path dependence
+- Removing smooths
+  - `\(p\)`-values
+  - shrinkage
+- Comparing models
+- Comparing response distributions
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-MML-AM_HTMLorMML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

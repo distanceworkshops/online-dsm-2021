@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Making predictions, variance estimation, maps</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="David L Miller (@millerdl)" />
+    <script src="libs/header-attrs-2.1/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="custom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+class: title-slide, inverse, center, middle
+
+# Lecture 5: Predictions&lt;br/&gt;and&lt;br/&gt;variance
+
+&lt;div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px"&gt;
+&lt;img src="images/02-foundation-vertical-white.png" height="200"&gt;
+&lt;/div&gt;
+
+---
+
+
+
+
+# So far...
+
+- Build, check &amp; select *detection* models
+- Build, check &amp; select *spatial* models
+
+&lt;p align="center"&gt;&lt;b&gt;What about predictions?&lt;/b&gt;&lt;/p&gt;
+
+
+---
+class: inverse, middle, center
+# Let's talk about maps
+
+---
+# What does a map mean?
+
+.pull-left[
+![](dsm5-prediction-variance-advice_files/figure-html/predmap1-1.png)&lt;!-- --&gt;
+]
+
+.pull-right[
+- Grids!
+- Cells are abundance estimate
+- "snapshot"
+- Sum cells to get abundance
+- Sum a subset?
+]
+
+---
+# Going back to the formula
+
+Count model ( `\(j\)` observations):
+
+$$
+n_j = A_j\hat{p}_j \exp\left[ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j) \right] + \epsilon_j
+$$
+
+&lt;br/&gt;
+Predictions (index `\(r\)`):
+
+$$
+\hat{n}_r = A_r \exp\left[ \hat{\beta}_0 + \hat{s}(\text{y}_r) + \hat{s}(\text{Depth}_r) \right]
+$$
+
+&lt;br/&gt;
+Need to "fill-in" values for `\(A_r\)`, `\(\text{y}_r\)` and `\(\text{Depth}_r\)`.
+
+---
+# Predicting
+
+- With these values can use `predict` in R
+- `predict(model, newdata=data, off.set=off.set)`
+
+- `off.set` gives the area of the grid cells
+- more info in `?predict.dsm`
+
+---
+# Prediction data
+
+
+```
+##            x      y      Depth      SST      NPP DistToCAS
+## 126 547984.6 788254  153.59825 12.04609 1462.521 11788.974
+## 127 557984.6 788254  552.31067 12.81379 1465.410  5697.248
+## 258 527984.6 778254   96.81992 12.90251 1429.432 13722.626
+## 259 537984.6 778254  138.23763 13.21393 1424.862  9720.671
+## 260 547984.6 778254  505.14386 13.75655 1379.351  8018.690
+## 261 557984.6 778254 1317.59521 14.42525 1348.544  3775.462
+##              EKE off.set      long      lat
+## 126 0.0008329031   1e+08 -66.52252 40.94697
+## 127 0.0009806611   1e+08 -66.40464 40.94121
+## 258 0.0011575423   1e+08 -66.76551 40.86781
+## 259 0.0013417297   1e+08 -66.64772 40.86227
+## 260 0.0026881567   1e+08 -66.52996 40.85662
+## 261 0.0045683752   1e+08 -66.41221 40.85087
+```
+
+---
+# Predictors
+
+&lt;img src="dsm5-prediction-variance-advice_files/figure-html/preddata-plot-1.png" height="800" /&gt;
+
+---
+# Making a prediction
+
+- Add another column to the prediction data
+- Plotting then easier (in R)
+
+
+```r
+predgrid$Nhat_tw &lt;- predict(dsm_all_tw_rm,
+                            predgrid,
+                            off.set=predgrid$off.set)
+```
+
+---
+# Maps of predictions
+
+.pull-left[
+
+![](dsm5-prediction-variance-advice_files/figure-html/predmap-1.png)&lt;!-- --&gt;
+]
+.pull-right[
+
+
+```r
+p &lt;- ggplot(predgrid) +
+      geom_tile(aes(x=x, y=y,
+                    fill=Nhat_tw)) +
+      scale_fill_viridis() +
+      coord_equal()
+print(p)
+```
+]
+
+---
+# Total abundance
+
+Each cell has an abundance, sum to get total
+
+
+```r
+sum(predgrid$Nhat_tw)
+```
+
+```
+## [1] 2491.863
+```
+
+---
+# Subsetting
+
+R subsetting lets you calculate "interesting" estimates:
+
+
+```r
+# how many sperm whales at depths shallower than 2500m?
+sum(predgrid$Nhat_tw[predgrid$Depth &lt; 2500])
+```
+
+```
+## [1] 1006.27
+```
+
+```r
+# how many sperm whales East of 0?
+sum(predgrid$Nhat_tw[predgrid$x&gt;0])
+```
+
+```
+## [1] 1383.744
+```
+
+---
+class: inverse, middle, center
+# Extrapolation
+
+---
+# What do we mean by extrapolation?
+
+.pull-left[
+
+- Predicting at values outside those observed
+- What does "outside" mean?
+  - between transects?
+  - outside "survey area"?
+]
+.pull-right[
+
+![](dsm5-prediction-variance-advice_files/figure-html/plottracks-1.png)&lt;!-- --&gt;
+]
+
+---
+# Extrapolation
+
+- In general, try not to do it!
+- Variance issues?
+- Space-time interchangability?
+- `dsmextra` package by Phil Bouchet
+  - [https://densitymodelling.github.io/dsmextra/index.html](https://densitymodelling.github.io/dsmextra/index.html)
+
+![dsm extra logo](images/dsmextra-hex.png)
+
+---
+# Prediction recap
+
+* Using `predict`
+* Getting "overall" abundance
+* Subsetting
+* Plotting in R
+* Extrapolation (and its dangers)
+
+---
+class: inverse, middle, center
+# Estimating variance
+
+
+
+---
+class: inverse, middle, center
+# Now we can make predictions
+## Now we are dangerous.
+
+---
+class: inverse, middle, center
+# Predictions are useless without uncertainty
+
+---
+class: inverse, middle, center
+# Where does uncertainty come from?
+
+---
+# Sources of uncertainty
+
+- Detection function parameters
+- GAM parameters
+- (And more! But only looking at these 2 here!)
+
+![](dsm5-prediction-variance-advice_files/figure-html/unc-sources-1.png)&lt;!-- --&gt;
+---
+# Uncertianty of what?
+
+- Uncertainty from detection function + GAM
+- Want to talk about `\(\hat{N}\)`, so need to do some maths
+- `dsm` does this for you!
+- Details in Miller et al (2013) appendix
+
+
+---
+# GAM + detection function uncertainty
+
+(Getting a little fast-and-loose with the mathematics)
+
+&lt;div style="font-size:150%"&gt;
+$$
+\text{CV}^2\left( \hat{N} \right) \approx \text{CV}^2\left( \text{GAM} \right) +
+$$
+
+$$
+\text{CV}^2\left( \text{detection function}\right)
+$$
+&lt;/div&gt;
+&lt;br/&gt;
+&lt;br/&gt;
+&lt;p align="center"&gt;the "delta method"&lt;/p&gt;
+---
+# When can we use the delta method?
+
+- Assumes detection function and GAM are **independent**
+- This is okay if:
+  - no detection function covariates
+
+![](images/delta_when.png)
+---
+# Variance propagation
+
+- When detection function is not independent
+- Uncertainty "propagated" through the model
+- Refit both models together
+- Bravington, Miller and Hedley (2019)
+  - [https://arxiv.org/abs/1807.07996](https://arxiv.org/abs/1807.07996)
+
+
+---
+# In R...
+
+- Functions in `dsm` to do this
+- `dsm.var.gam`
+  - assumes spatial model and detection function are independent
+- `dsm.var.prop`
+  - propagates uncertainty from detection function to spatial model
+  - only works for `count` models
+  - covariates can only vary at segment level
+
+---
+# Variance of abundance
+
+Using `dsm.var.gam`
+
+
+```r
+dsm_tw_var_ind &lt;- dsm.var.gam(dsm_all_tw_rm, predgrid,
+                              off.set=predgrid$off.set)
+summary(dsm_tw_var_ind)
+```
+
+```
+## Summary of uncertainty in a density surface model calculated
+##  analytically for GAM, with delta method
+## 
+## Approximate asymptotic confidence interval:
+##     2.5%     Mean    97.5% 
+## 1539.017 2491.863 4034.641 
+## (Using log-Normal approximation)
+## 
+## Point estimate                 : 2491.863 
+## CV of detection function       : 0.2113123 
+## CV from GAM                    : 0.1329 
+## Total standard error           : 622.0386 
+## Total coefficient of variation : 0.2496
+```
+
+---
+# Plotting - data processing
+
+- Calculate uncertainty per-cell
+- `dsm.var.*` thinks `predgrid` is one "region"
+- Need to split data into cells (using `split()`)
+- Need `width` and `height` of cells for plotting
+
+
+---
+# Plotting (code)
+
+
+```r
+predgrid$width &lt;- predgrid$height &lt;- 10*1000
+predgrid_split &lt;- split(predgrid, 1:nrow(predgrid))
+head(predgrid_split,3)
+```
+
+```
+## $`1`
+##            x      y    Depth      SST      NPP DistToCAS
+## 126 547984.6 788254 153.5983 12.04609 1462.521  11788.97
+##              EKE off.set      long      lat    Nhat_tw
+## 126 0.0008329031   1e+08 -66.52252 40.94697 0.01417646
+##     height width
+## 126  10000 10000
+## 
+## $`2`
+##            x      y    Depth      SST     NPP DistToCAS
+## 127 557984.6 788254 552.3107 12.81379 1465.41  5697.248
+##              EKE off.set      long      lat    Nhat_tw
+## 127 0.0009806611   1e+08 -66.40464 40.94121 0.05123446
+##     height width
+## 127  10000 10000
+## 
+## $`3`
+##            x      y    Depth      SST      NPP DistToCAS
+## 258 527984.6 778254 96.81992 12.90251 1429.432  13722.63
+##             EKE off.set      long      lat    Nhat_tw
+## 258 0.001157542   1e+08 -66.76551 40.86781 0.01118852
+##     height width
+## 258  10000 10000
+```
+
+---
+# CV plot
+
+
+```r
+dsm_tw_var_map &lt;- dsm.var.gam(dsm_all_tw_rm, predgrid_split,
+                               off.set=predgrid$off.set)
+```
+
+.pull-left[
+![](dsm5-prediction-variance-advice_files/figure-html/plotit-1.png)&lt;!-- --&gt;
+]
+.pull-right[
+```
+p &lt;- plot(dsm_tw_var_map,
+          observations=FALSE,
+          plot=FALSE) + 
+      coord_equal() +
+      scale_fill_viridis()
+print(p)
+```
+]
+
+---
+# Interpreting CV plots
+
+- Plotting coefficient of variation
+- Standardise standard deviation by mean
+- `\(\text{CV} = \text{se}(\hat{N})/\hat{N}\)` (per cell)
+- Can be useful to overplot survey effort
+
+---
+# Effort overplotted
+
+![](dsm5-prediction-variance-advice_files/figure-html/plottracksCV-1.png)&lt;!-- --&gt;
+
+---
+# Big CVs
+
+- Here CVs are "well behaved"
+- Not always the case (huge CVs possible)
+- These can be a pain to plot
+- Use `cut()` in R to make categorical variable
+  - e.g. `c(seq(0,1, len=10), 2:4, Inf)` or somesuch
+- (Example in practical)
+
+---
+# Uncertainty recap
+
+- How does uncertainty arise in a DSM?
+- Estimate variance of abundance estimate
+- Map coefficient of variation
+
+---
+class: inverse, middle, center
+# Practical advice
+
+---
+# Pilot studies and "you get what you pay for"
+
+- Designing surveys is hard
+- Designing surveys is essential
+
+- Better to fail one season than fail for 5, 10 years
+- Get information early, get it cheap
+  - Inform design from a pilot study
+
+---
+# Avoiding rules of thumb
+
+- Think about assumptions
+  - Detection function
+  - Spatial model
+- Think about design
+  - Spatial coverage
+  - Covariate coverage
+
+---
+# Sometimes things are complicated
+
+- Weather has a big effect on detectability
+- Need to record during survey
+- Disambiguate between distribution/detectability
+- Potential confounding can be BAD
+
+![weather or density?](images/weather_or_density.png)
+
+---
+# Visibility during POWER 2014
+
+&lt;img src="images/power-weather.png" width="100%"&gt;
+
+Thanks to Hiroto Murase and co. for this data!
+
+---
+# Covariates can make a big difference!
+
+- Same data, same spatial model
+- With weather covariates and without
+&lt;img src="images/covar-inout.png" width="100%"&gt;
+
+---
+# Disappointment
+- Sometimes you don't have enough data
+- Or, enough coverage
+- Or, the right covariates
+&lt;br/&gt;
+&lt;br/&gt;
+&lt;br/&gt;
+&lt;div class="medq", align="center"&gt;&lt;b&gt;Sometimes, you can't build a spatial model&lt;/b&gt;&lt;/div&gt;
+
+---
+# Segmenting
+
+- Example on [course site](http://workshops.distancesampling.org/online-dsm-2020/data-format/dsm-data-formatting.html)
+- Length of `\(\approx 2 w\)` is reasonable
+- Too big: no detail
+- Too small: all 0/1
+- See also [Redfern et al., (2008)](http://www.int-res.com/abstracts/meps/v363/p1-14/)
+
+---
+class: inverse, center, middle
+# Getting help
+
+---
+# Resources
+
+- [Course reading list](http://workshops.distancesampling.org/online-dsm-2020/reading_list.html) has pointers to these topics
+- [DenMod wiki](https://osf.io/5eza8/wiki/home/) with FAQ and more
+- Distance sampling Google Group
+  - Friendly, helpful, low traffic
+  - see [distancesampling.org/distancelist.html](http://distancesampling.org/distancelist.html)
+
+---
+class: inverse, center, middle
+# That's all folks!
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-MML-AM_HTMLorMML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

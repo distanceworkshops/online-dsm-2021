@@ -2,3 +2,5 @@ javascripts/
 stylesheets/
 favicon.ico
 .Rproj.user
+slides/*_cache
+practicals/*_cache

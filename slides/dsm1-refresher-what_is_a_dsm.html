@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Lecture 1: distance sampling &amp; density surface models</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="David L Miller (@millerdl)" />
+    <script src="libs/header-attrs-2.1/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="custom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+class: title-slide, inverse, center, middle
+
+# Lecture 1: distance sampling &amp; density surface models
+
+&lt;div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px"&gt;
+&lt;img src="images/02-foundation-vertical-white.png" height="200"&gt;
+&lt;/div&gt;
+
+---
+class: inverse, middle, center
+# Why model abundance spatially?
+
+---
+class: inverse, middle, center
+# Maps
+
+---
+
+.pull-left[
+![](images/ak-talk.png)
+![](images/bigbears.png)
+]
+
+.pull-right[
+- Black bears in Alaska
+- Heterogeneous spatial distribution
+
+]
+
+---
+class: inverse, middle, center
+# Spatial decision making
+
+---
+
+.pull-left[
+![](images/block_island.png)
+![](images/plot-loon-preds.png)
+]
+
+.pull-right[
+- Block Island, Rhode Island
+- First offshore wind in the USA
+- Spatial impact assessment
+
+![](images/block-island-windfarms.png)
+]
+
+---
+class: inverse, middle, center
+# Back to regular distance sampling
+
+---
+# How many animals are there? (500!)
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/plot-1.png)&lt;!-- --&gt;
+
+---
+# Plot sampling
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/plotsampling-1.png)&lt;!-- --&gt;
+
+- Surveyed 10 quadrats (each `\(0.1^2\)` units)
+  - Total covered area `\(a=10 * 0.1^2 =\)` 0.1
+- Saw `\(n=\)` 59 animals
+- Estimated density `\(\hat{D}=n/a=\)` 590
+- Total area `\(A=1\)`
+- Estimated abundance `\(\hat{N}=\hat{D}A=\)` 590
+
+---
+# Strip transect
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/strip-1.png)&lt;!-- --&gt;
+
+- Surveyed 4 lines (each `\(1*0.025\)` units)
+  - Total covered area `\(a=4*1*0.025 =\)` 0.1
+- Saw `\(n=\)` 57 animals
+- Estimated density `\(\hat{D}=n/a=\)` 570
+- Total area `\(A=1\)`
+- Estimated abundance `\(\hat{N}=\hat{D}A=\)` 570
+
+---
+# Detectability matters!
+
+- We've assumed certain detection so far
+- This rarely happens in the field
+- Distance to the **object** is important
+- Detectability should decrease with increasing distance
+
+---
+# Distance and detectability
+
+&lt;img src="images/dolphins.jpg" alt="Dolphins near and far from the bow of a ship. Credit Scott and Mary Flanders"&gt;
+
+&lt;small&gt;Credit &lt;a href="http://www.nordhavn.com/egret/captains_log_sept11.php"&gt;Scott and Mary Flanders&lt;/a&gt;&lt;/small&gt;
+
+---
+# Line transect
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/lt-1.png)&lt;!-- --&gt;
+
+---
+# Line transects - distances
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/distance-hist-1.png)&lt;!-- --&gt;
+ 
+- Distances from the **line** (sampler) to animal
+- Now we recorded distances, what do they look like?
+- "Fold" distribution over, left/right doesn't matter
+- Drop-off in # observations w. increasing distance
+
+---
+# Distance sampling animation
+
+![Animation of line transect survey](images/distanim.gif)
+
+---
+# Detection function
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/df-fit-1.png)&lt;!-- --&gt;
+
+---
+# Distance sampling estimate
+
+
+
+- Surveyed 5 lines (each `\(1*0.025\)` units)
+  - Total covered area `\(a=5*1*0.02 =\)` 0.2
+- Probability of detection `\(\hat{p} =\)` 0.5981
+- Saw `\(n=\)` 60 animals
+- Inflate to `\(n/\hat{p}=\)` 100.31
+- Estimated density `\(\hat{D}=\frac{n/\hat{p}}{a}=\)` 502
+- Total area `\(A=1\)`
+- Estimated abundance `\(\hat{N}=\hat{D}A=\)` 502
+
+---
+# Reminder of assumptions
+
+1. Animals are distributed independent of lines
+
+2. On the line, detection is certain
+
+3. Distances are recorded correctly
+
+4. Animals don't move before detection
+
+
+---
+# What are detection functions?
+
+- Model `\(\mathbb{P}\left( \text{detection } \vert \text{ animal at distance } x \right)\)`
+- "Integrate out distance" == "area under curve" == `\(\hat{p}\)`
+- Many different forms, depending on the data
+- All share some characteristics
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/df-hn-1.png)&lt;!-- --&gt;
+
+---
+# Fitting detection functions (in R!)
+
+- Using the package `Distance`
+- Function `ds()` does most of the work
+- More on this in the practical!
+
+
+```r
+library(Distance)
+df_hn &lt;- ds(distdata, truncation=6000)
+```
+
+---
+# Horvitz-Thompson-like estimators
+
+- Once we have `\(\hat{p}\)` how do we get `\(\hat{N}\)`?
+- Rescale the (flat) density and extrapolate
+
+$$
+\hat{N} = \frac{\text{study area}}{\text{covered area}}\sum_{i=1}^n \frac{s_i}{\hat{p}_i}
+$$
+
+- `\(s_i\)` are group/cluster sizes
+- `\(\hat{p}_i\)` is the detection probability (from detection function)
+
+---
+# Hidden in this formula is a simple assumption
+
+- Probability of sampling every point in the study area is equal
+- Is this true? Sometimes.
+- If (and only if) the design is randomised
+
+---
+# Many faces of randomisation
+
+&lt;img src="dsm1-refresher-what_is_a_dsm_files/figure-html/randomisation-1.png" width="\textwidth" /&gt;
+
+---
+# Randomisation &amp; coverage probability
+
+- H-T equation above assumes even coverage
+  - (or you can estimate)
+
+&lt;img src="images/bc_plan.png" width=35%&gt; &lt;img src="images/bad_coverage.png" width=45% align="right"&gt; 
+
+---
+# Extra information
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/plottracks-1.png)&lt;!-- --&gt;
+
+
+
+---
+# Extra information - depth
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/plotdepth-1.png)&lt;!-- --&gt;
+
+---
+# Extra information - SST
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/plotsst-1.png)&lt;!-- --&gt;
+
+---
+class: inverse, middle, center
+# We should model that!
+
+---
+# DSM flow diagram
+
+&lt;img src="images/dsm-flow.png" alt="DSM process flow diagram" width=100%&gt;
+
+---
+# Modelling requirements
+
+- Include detectability
+- Account for effort
+- Flexible/interpretable effects
+- Predictions over an arbitrary area
+
+---
+class: inverse, middle, center
+# Accounting for effort
+
+---
+# Effort
+
+.pull-left[
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/tracks2-1.png)&lt;!-- --&gt;
+]
+
+.pull-right[
+- Have transects
+- Variation in counts and covars along them
+- Want a sample unit w/ minimal variation
+- "Segments": chunks of effort
+]
+
+---
+# Chopping up transects
+
+&lt;img src="images/dsmproc.png" alt="Physeter catodon by Noah Schlottman" width=80%&gt;
+
+[Physeter catodon by Noah Schlottman](http://phylopic.org/image/dc76cbdb-dba5-4d8f-8cf3-809515c30dbd/)
+
+---
+class: inverse, middle, center
+# Flexible, interpretable effects
+
+---
+# Smooth response
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/plotsmooths-1.png)&lt;!-- --&gt;
+
+---
+# Explicit spatial effects
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/plot-spat-smooths-1.png)&lt;!-- --&gt;
+
+---
+class: inverse, middle, center
+# Predictions
+
+---
+# Predictions over an arbitrary area
+
+.pull-left[
+
+![](dsm1-refresher-what_is_a_dsm_files/figure-html/predplot-1.png)&lt;!-- --&gt;
+]
+
+.pull-right[
+- Don't want to be restricted to predict on segments
+- Predict within survey area
+- Extrapolate outside (with caution)
+- Working on a grid of cells
+]
+
+---
+class: inverse, middle, center
+# Detection information
+
+---
+# Including detection information
+
+- Two options:
+  - adjust areas to account for **effective effort**
+  - use **Horvitz-Thompson estimates** as response
+
+---
+# Count model `count~...`
+
+- Area of each segment, `\(A_j\)`
+  - use `\(A_j\hat{p}_j\)`
+- think effective strip width ( `\(\hat{\mu} = w\hat{p}\)` )
+- Response is counts per segment
+- "Adjusting for effort"
+- "Count model"
+
+![](images/esw_change.png)
+
+---
+# Estimated abundance `abundance.est~...`
+
+- Effort is area of each segment
+- Estimate H-T abundance per segment
+
+$$
+\hat{n}_j = \sum_i \frac{s_i}{\hat{p}_i}
+$$
+
+(where the `\(i\)` observations are in segment `\(j\)`)
+
+![](images/Nhat_change.png)
+
+---
+# Detectability and covariates
+
+- 2 covariate "levels" in detection function
+  - "Observer"/"observation" -- change **within** segment
+  - "Segment" -- change **between** segments
+- "Count model" only lets us use segment-level covariates
+- "Estimated abundance" lets us use either
+
+---
+# When to use each approach?
+
+- Generally "nicer" to adjust effort
+- Keep response (counts) close to what was observed
+- **Unless** you want observation-level covariates
+
+---
+class: inverse, middle, center
+# Data requirements
+
+---
+# What do we need?
+
+- Need to "link" data
+  - ✅ Distance data/detection function
+  - ✅ Segment data
+  - ✅ Observation data (segments 🔗 detections)
+
+More info on course website.
+
+---
+
+![](images/dsm_tables.png)
+
+---
+class: inverse, middle, center
+# Example data
+
+---
+# Example data
+
+&lt;img src="images/data_ships.png"&gt;
+
+---
+# Example data
+
+&lt;img src="images/observers.png"&gt;
+
+---
+# Sperm whales 
+
+.pull-left[
+&lt;img src="images/spermwhale.png" width="100%"&gt;
+]
+.pull-right[
+
+- Hang out near canyons, eat squid
+- Surveys in 2004, US east coast
+- Thanks to Debi Palka (NOAA NEFSC), Lance Garrison (NOAA SEFSC) for data. Jason Roberts (Duke University) for data prep.
+]
+
+---
+# Recap
+
+- Model counts or estimated abundance
+- The effort is accounted for differently
+- Flexible models are good
+- Incorporate detectability
+- 2 tables + detection function needed
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-MML-AM_HTMLorMML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
