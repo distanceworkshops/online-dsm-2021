@@ -1,0 +1,201 @@
+---
+title: Spatially explicit models for distance sampling data
+author: David L Miller
+subtitle: "Practical 3: Multiple smooths and model selection"
+date: 8-12 June 2020
+
+---
+
+## Aims
+
+By the end of this practical, you should feel comfortable:
+
+- Fitting DSMs with multiple smooth terms in them
+- Selecting smooth terms by $p$-values
+- Using shrinkage smoothers
+- Selecting between models using AIC
+- Investigating sensitivity sensitivity and path dependence
+
+## Load data and packages
+
+
+```{r load-packages-03}
+library(Distance)
+library(dsm)
+library(ggplot2)
+library(patchwork)
+library(knitr)
+```
+
+Load the data processed from GIS and the fitted detection function objects from the previous exercises:
+```{r load-data-03}
+load("spermwhale.RData")
+load("df-models.RData")
+```
+
+## Exploratory analysis
+
+We can plot the covariates together using the following code (don't worry too much about understanding what that code is doing at the moment).
+
+```{r plotcovars, fig.width=10, fig.height=9}
+# make a list to hold our plots
+p <- list()
+
+# make a plot for each covariate
+for(covname in c("Depth", "SST", "NPP", "DistToCAS", "EKE")){
+  # make
+  p[[covname]] <- ggplot() +
+    # covariates are plotted as tiles
+    geom_tile(aes_string(x="x", y="y", fill=covname), data=predgrid) + 
+    geom_point(aes(x=x, y=y, size=size),
+               alpha=0.6,
+               data=subset(obs, size>0))+
+    # remove grey background etc
+    theme_minimal() +
+    # remove axis labels and fiddle with the legend
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(),
+          axis.title.y=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(),
+          legend.position="right", legend.key.width=unit(0.005, "npc")) +
+    # make the fill scale be colourblind friendly
+    scale_fill_viridis_c()
+}
+
+# using patchwork to stick the plots together
+p[["Depth"]] + p[["SST"]] + p[["NPP"]] + p[["DistToCAS"]] + p[["EKE"]]  + plot_layout(ncol = 3, nrow=3)
+```
+
+We could improve these plots by adding a map of the USA but this will do for now!
+
+## Pre-model fitting
+
+As we did in the previous exercise, we must remove the observations from the spatial data that we excluded when we fitted the detection function, i.e. those observations at distances greater than the truncation.
+```{r truncate-obs-03}
+obs <- obs[obs$distance <= df_hn$ddf$meta.data$width, ]
+```
+Here we used the value of the truncation stored in the detection function object (`df_hn$ddf`), but we could also use the numeric value (which we can find by checking the model's `summary()`).
+
+Again note that if you want to fit DSMs using detection functions with different truncation distances, then you'll need to reload the `spermwhale.RData` and do the truncation again for that detection function.
+
+## Our new friend `+`
+
+We can build a really big model using `+` to include all the terms that we want in the model. We can check what covariates are available to us by using `head()` to look at the segment table:
+
+```{r seg-table}
+head(segs)
+```
+
+We can then fit a model with the available covariates in it, each as an `s()` term.
+```{r nb-xy-03}
+dsm_nb_xy_ms <- dsm(count~s(x,y, bs="ts") +
+                          s(Depth, bs="ts") +
+                          s(DistToCAS, bs="ts") +
+                          s(SST, bs="ts") +
+                          s(EKE, bs="ts") +
+                          s(NPP, bs="ts"),
+                    df_hn, segs, obs,
+                    family=nb())
+summary(dsm_nb_xy_ms)
+```
+
+Notes:
+
+1. We are using `bs="ts"` to use the shrinkage thin plate regression spline. More technical detail on these smooths can be found on their manual page `?smooth.construct.ts.smooth.spec`.
+2. We have not specified basis complexity (`k`) at the moment. Note that if you want to specify the same complexity for multiple terms, it's often easier to create a variable that can then be provided to `k` (for example, specify `k1 <- 15` and then set `k=k1` in the required `s()` terms).
+
+### Plot
+
+Let's plot the smooths from this model:
+
+```{r plot-nb-xy, fig.cap="Smooths for `dsm_nb_xy_ms`."}
+plot(dsm_nb_xy_ms, pages=1)
+```
+
+Notes:
+
+1. Setting `shade=TRUE` gives prettier confidence bands (by default `shade=FALSE`).
+2. As with `vis.gam()` the response is on the link scale.
+3. `scale=0` puts each plot on a different $y$-axis scale, making it easier to see the effects. Setting `scale=-1` (the default) will put the plots on a common $y$-axis scale (so you can gauge relative importance).
+
+We can also plot the bivariate smooth of `x` and `y` using `vis.gam()`:
+```{r nb-xy-visgam-03, fig.width=4, fig.height=4, fig.cap="Fitted surface with all environmental covariates, and neg-binomial response distribution."}
+vis.gam(dsm_nb_xy_ms, view=c("x","y"), plot.type="contour", too.far=0.1, 
+        main="s(x,y) (link scale)", asp=1)
+```
+
+Compare this plot to the equivalent plot generated in the previous exercise when only `x` and `y` were included in the model.
+
+
+### Select terms
+
+As was covered in the lectures, we can select terms by (approximate) $p$-values and by looking for terms that have EDFs significantly less than 1 (those which have been shrunk).
+
+Remove the terms that are non-significant at this level and re-run the above checks, summaries and plots to see what happens. It's helpful to make notes for yourself as you go. 
+
+Decide on a significance level that you'll use to discard terms in the model. It's easiest to either comment out the terms that are to be removed (using `#`) or by copying the code chunk above and pasting it below.
+
+Having removed one smooth and reviewed your model, you may decide you wish to remove another. Repeat the process of removing a term and looking at plots and diagnostics again.
+
+Try doing the same thing but using $p$-values. Are the resulting models different? Why?
+
+Compare these results to the diagram [in the lecture notes](http://workshops.distancesampling.org/online-dsm-2020/slides/dsm3-multiple_smooths-section.html#15). Do your results differ?
+
+
+
+## Comparing models
+
+As with the detection functions in practical 1, here is a quick function to generate model results tables with response distribution, smooth terms list and AIC:
+
+```{r summarize-models}
+summarize_dsm <- function(model){
+
+  summ <- summary(model)
+
+  data.frame(response = model$family$family,
+             terms    = paste(rownames(summ$s.table), collapse=", "),
+             AIC      = AIC(model)
+            )
+}
+```
+
+We can make a list of the models and pass the list to the above function.
+
+```{r apply-summary}
+# add your models to this list!
+model_list <- list(dsm_nb_xy_ms)
+# use plyr to go from list to data.frame via summarize_dsm
+library(plyr)
+summary_table <- ldply(model_list, summarize_dsm)
+# make the row names whatever you like
+row.names(summary_table) <- c("Full model, `dsm_nb_xy_ms`")
+```
+
+```{r print-table-03, results="asis"}
+# sort that table by AIC
+summary_table <- summary_table[order(summary_table$AIC, decreasing=TRUE),]
+# print it in a nice format
+kable(summary_table, 
+      caption = "Model selection table")
+```
+
+
+## Extra credit: estimated abundance as a response
+
+So far we have only looked at models with `count` as the response. Try using a detection function with covariates and use `abundance.est`, instead of `count`, as the response in the chunk below:
+
+```{r abund-est}
+
+```
+
+## Saving models
+
+Now save the models that you'd like to use to predict with later: I recommend saving as many models as you can so you can compare the results in the next practical.
+
+```{r save-models-03}
+# add your models here
+save(dsm_nb_xy_ms,
+     file="dsms.RData")
+```
