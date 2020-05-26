@@ -42,14 +42,11 @@ class: title-slide, inverse, center, middle
 </div>
 
 ---
-
 class: inverse, middle, center
-
 # Why model abundance spatially?
 
 ---
 class: inverse, middle, center
-
 # Maps
 
 ---
@@ -67,7 +64,6 @@ class: inverse, middle, center
 
 ---
 class: inverse, middle, center
-
 # Spatial decision making
 
 ---
@@ -86,13 +82,10 @@ class: inverse, middle, center
 ]
 
 ---
-
 class: inverse, middle, center
-
 # Back to regular distance sampling
 
 ---
-
 # How many animals are there? (500!)
 
 ```{r, plot, echo=FALSE}
@@ -111,9 +104,7 @@ polygon(x=c(0,1,1,0,0), y=c(0,0,1,1,0))
 ```
 
 ---
-
 # Plot sampling
-
 
 ```{r, plotsampling, echo=FALSE}
 par(mar=rep(0,4))
@@ -139,8 +130,6 @@ for(i in 1:10){
 }
 ```
 
-
-
 - Surveyed 10 quadrats (each $0.1^2$ units)
   - Total covered area $a=10 * 0.1^2 =$ `r 10*0.1^2`
 - Saw $n=$ `r n` animals
@@ -149,7 +138,6 @@ for(i in 1:10){
 - Estimated abundance $\hat{N}=\hat{D}A=$ `r  n/(10*0.1^2)`
 
 ---
-
 # Strip transect
 
 ```{r strip}
@@ -188,8 +176,6 @@ A <- 1
 Nhat <- D*A
 ```
 
-
-
 - Surveyed 4 lines (each $1*0.025$ units)
   - Total covered area $a=4*1*0.025 =$ `r covered`
 - Saw $n=$ `r n` animals
@@ -198,9 +184,7 @@ Nhat <- D*A
 - Estimated abundance $\hat{N}=\hat{D}A=$ `r  Nhat`
 
 ---
-
 # Detectability matters!
-
 
 - We've assumed certain detection so far
 - This rarely happens in the field
@@ -208,13 +192,11 @@ Nhat <- D*A
 - Detectability should decrease with increasing distance
 
 ---
-
 # Distance and detectability
 
 <img src="images/dolphins.jpg" alt="Dolphins near and far from the bow of a ship. Credit Scott and Mary Flanders">
 
 <small>Credit <a href="http://www.nordhavn.com/egret/captains_log_sept11.php">Scott and Mary Flanders</a></small>
-
 
 ---
 # Line transect
@@ -248,9 +230,7 @@ for(i in 1:4){
 ```
 
 ---
-
 # Line transects - distances
-
 
 ```{r distance-hist}
 hist(detected_distances, main="", xlab="Distance",breaks=seq(0,max(detected_distances),len=7))
@@ -262,15 +242,12 @@ hist(detected_distances, main="", xlab="Distance",breaks=seq(0,max(detected_dist
 - Drop-off in # observations w. increasing distance
 
 ---
-
 # Distance sampling animation
 
 ![Animation of line transect survey](images/distanim.gif)
 
 ---
-
 # Detection function
-
 
 ```{r df-fit}
 hist(detected_distances, main="", xlab="Distance",breaks=seq(0,max(detected_distances),len=7), freq=FALSE, ylim=c(0, 85), axes=FALSE, ylab="Probability of detection")
@@ -282,9 +259,7 @@ axis(2, at=c(0, g0/2, g0), labels=c(0,0.5,1))
 ```
 
 ---
-
 # Distance sampling estimate
-
 
 ```{r calc-Nhat-line, echo=FALSE}
 ## calculate Nhat
@@ -296,7 +271,6 @@ covered <- 2*0.02*5
 Nhat.lt <- A*n/(covered*p)
 ```
 
-
 - Surveyed 5 lines (each $1*0.025$ units)
   - Total covered area $a=5*1*0.02 =$ `r covered`
 - Probability of detection $\hat{p} =$ `r round(p,4)`
@@ -307,9 +281,7 @@ Nhat.lt <- A*n/(covered*p)
 - Estimated abundance $\hat{N}=\hat{D}A=$ `r  round(Nhat.lt, 0)`
 
 ---
-
 # Reminder of assumptions
-
 
 1. Animals are distributed independent of lines
 
@@ -321,9 +293,7 @@ Nhat.lt <- A*n/(covered*p)
 
 
 ---
-
 # What are detection functions?
-
 
 - Model $\mathbb{P}\left( \text{detection } \vert \text{ animal at distance } x \right)$
 - "Integrate out distance" == "area under curve" == $\hat{p}$
@@ -344,7 +314,6 @@ curve(f, from=0, to=0.025, xlab="Distance", ylab="Probability of detection", mai
 ```
 
 ---
-
 # Fitting detection functions (in R!)
 
 - Using the package `Distance`
@@ -357,8 +326,6 @@ df_hn <- ds(distdata, truncation=6000)
 ```
 
 ---
-
-
 # Horvitz-Thompson-like estimators
 
 - Once we have $\hat{p}$ how do we get $\hat{N}$?
@@ -372,19 +339,14 @@ $$
 - $\hat{p}_i$ is the detection probability (from detection function)
 
 ---
-
 # Hidden in this formula is a simple assumption
-
 
 - Probability of sampling every point in the study area is equal
 - Is this true? Sometimes.
 - If (and only if) the design is randomised
 
-
 ---
-
 # Many faces of randomisation
-
 
 ```{r randomisation, fig.width=14, fig.height=4.5, out.width='\\textwidth'}
 set.seed(12133)
@@ -429,7 +391,6 @@ box()
 ```
 
 ---
-
 # Randomisation & coverage probability
 
 - H-T equation above assumes even coverage
@@ -438,7 +399,6 @@ box()
 <img src="images/bc_plan.png" width=35%> <img src="images/bad_coverage.png" width=45% align="right"> 
 
 ---
-
 # Extra information
 
 ```{r plottracks, echo=FALSE}
@@ -463,10 +423,7 @@ save(usa, tracks, file="geosave.RData")
 ```
 
 ---
-
-
 # Extra information - depth
-
 
 ```{r plotdepth}
 p <- ggplot() +
@@ -480,9 +437,7 @@ print(p)
 ```
 
 ---
-
 # Extra information - SST
-
 
 ```{r plotsst, fig.width=10}
 p <- ggplot() +
@@ -496,37 +451,27 @@ print(p)
 ```
 
 ---
-
 class: inverse, middle, center
-
 # We should model that!
 
 ---
-
 # DSM flow diagram
 
 <img src="images/dsm-flow.png" alt="DSM process flow diagram" width=100%>
 
-
 ---
-
 # Modelling requirements
-
 
 - Include detectability
 - Account for effort
 - Flexible/interpretable effects
 - Predictions over an arbitrary area
 
-
 ---
-
 class: inverse, middle, center
-
 # Accounting for effort
 
 ---
-
 # Effort
 
 .pull-left[
@@ -543,28 +488,18 @@ print(p_maptr)
 ]
 
 ---
-
-
 # Chopping up transects
-
 
 <img src="images/dsmproc.png" alt="Physeter catodon by Noah Schlottman" width=80%>
 
 [Physeter catodon by Noah Schlottman](http://phylopic.org/image/dc76cbdb-dba5-4d8f-8cf3-809515c30dbd/)
 
-
 ---
-
 class: inverse, middle, center
-
 # Flexible, interpretable effects
 
-
 ---
-
-
 # Smooth response
-
 
 ```{r plotsmooths, messages=FALSE}
 library(Distance)
@@ -575,25 +510,18 @@ dsm_tw_xy_depth <- dsm(count ~ s(x, y) + s(Depth), ddf.obj=df, observation.data=
 plot(dsm_tw_xy_depth, select=2)
 ```
 
-
 ---
-
 # Explicit spatial effects
-
 
 ```{r plot-spat-smooths, messages=FALSE}
 vis.gam(dsm_tw_xy_depth, view=c("x","y"), plot.type="contour", main="", asp=1, too.far=0.06, n.grid=100)
 ```
 
-
 ---
-
 class: inverse, middle, center
-
 # Predictions
 
 ---
-
 # Predictions over an arbitrary area
 
 .pull-left[
@@ -619,9 +547,7 @@ print(p)
 ]
 
 ---
-
 class: inverse, middle, center
-
 # Detection information
 
 ---
@@ -689,33 +615,23 @@ More info on course website.
 
 ---
 
-![](dsm_tables.png)
+![](images/dsm_tables.png)
 
 ---
 class: inverse, middle, center
-
 # Example data
-
-
 
 ---
-
 # Example data
-
 
 <img src="images/data_ships.png">
 
 ---
-
-
 # Example data
-
 
 <img src="images/observers.png">
 
 ---
-
-
 # Sperm whales 
 
 .pull-left[
@@ -729,13 +645,10 @@ class: inverse, middle, center
 ]
 
 ---
-
 # Recap
-
 
 - Model counts or estimated abundance
 - The effort is accounted for differently
 - Flexible models are good
 - Incorporate detectability
 - 2 tables + detection function needed
-
