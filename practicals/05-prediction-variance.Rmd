@@ -1,0 +1,146 @@
+---
+title: Spatially explicit models for distance sampling data
+author: David L Miller
+subtitle: "Practical 4: Prediction and variance"
+date: 8-12 June 2020
+
+---
+
+## Aims
+
+By the end of this practical, you should feel comfortable:
+
+- Making a prediction using the `predict()` function
+- Summing the prediction cells to obtain a total abundance for a given area
+- Plotting a map of predictions
+- Knowing when to use `dsm.var.prop` and when to use `dsm.var.gam`
+- Estimating variance for a given prediction area
+- Estimating variance per-cell for a prediction grid
+- Interpreting the `summary()` output for uncertainty estimates
+- Making maps of the coefficient of variation in R
+
+
+## Loading the packages and data
+
+```{r load-packages}
+library(knitr)
+library(dsm)
+library(ggplot2)
+```
+
+Load our models and data:
+
+```{r load-models}
+load("spermwhale.RData")
+# models with all covariates
+load("dsms.RData")
+```
+
+## Prediction data
+
+Our prediction data lives in the `predgrid` object. This data was prepared from various sources and the since some of the covariates were dynamic (SST, NPP and EKE), the dates for these were arbitrarily choosen as 2 June 2004, or Julian date 153.
+
+If you're preparing this data yourself, the [`rerddap` package](https://cran.r-project.org/web/packages/rerddap/) can be used to obtain marine data from NOAA for both segments and predictions.
+
+We can take a look at our data using `head()` to see the first few rows:
+
+```{r inspect-preddata}
+head(predgrid)
+```
+
+As we saw in the slides, the `predict()` function will fill in the variables in the model formula with these values to obtain the predictions at each cell.
+
+For example using the model `dsm_nb_xy_ms`:
+
+```{r makepred1}
+pp <- predict(dsm_nb_xy_ms, predgrid, off.set=predgrid$off.set)
+```
+
+This is just a list of numbers -- the predicted abundance per cell. We can sum these to get the estimated abundance for the study area:
+
+```{r predsum}
+sum(pp, na.rm=TRUE)
+```
+
+We can also plot this to get a spatial representation of the predictions:
+```{r predsp, fig.cap="Predicted surface for abundance estimates with bivariate spatial smooth along with environmental covariates."}
+# assign the predictions to the prediction grid data.frame
+predgrid$Nhat_nb_xy <- pp
+
+# plot!
+p <- ggplot(predgrid) +
+  geom_tile(aes(x=x, y=y, fill=Nhat_nb_xy, width=10*1000, height=10*1000)) +
+  coord_equal() + 
+  # better colour scheme  
+  scale_fill_viridis_c() +
+  # cleaner plot
+  theme_minimal() +
+  # set the label for the fill colour
+  labs(fill="Abundance")
+print(p)
+```
+
+Use the chunks above as a template and make predictions for the other models you saved in the previous exercises. In particular, compare the models with only spatial terms to those with environmental covariates included.
+
+## Variance estimation
+
+Depending on the covariates in the model, we can use either `dsm.var.prop` or `dsm.var.gam`. Remember:
+- `dsm.var.gam`
+  - assumes spatial model and detection function are independent
+- `dsm.var.prop`
+  - propagates uncertainty from detection function to spatial model
+  - only works for `count` models
+  - covariates can only vary at segment level
+
+If there are no covariates in the detection function, use `dsm.var.gam` since there's no covariance between the detection function and the spatial model.
+  
+`dsm_nb_xy_ms` doesn't include any covariates at the observer level in the detection function, so we can use `dsm.var.gam` to estimate the uncertainty.
+
+```{r varest}
+# now estimate variance
+var_nb_xy_ms <- dsm.var.gam(dsm_nb_xy_ms, predgrid, 
+                             off.set=predgrid$off.set)
+```
+To summarise the results of this variance estimate:
+```{r varest-summary}
+summary(var_nb_xy_ms)
+```
+
+Try this out for some of the other models you've saved.
+
+## Plotting
+
+We can plot a map of the coefficient of variation, but we first need to estimate the variance per prediction cell, rather than over the whole area. 
+
+```{r per-cell-var}
+# use the split function to make each row of the predictiond data.frame into
+# an element of a list
+predgrid_var_split <- split(predgrid, 1:nrow(predgrid))
+var_split_nb_xy_ms <- dsm.var.gam(dsm_nb_xy_ms, predgrid_var_split, 
+                                   off.set=predgrid$off.set)
+```
+Now we have the per-cell coefficients of variation, we assign that to a column of the prediction grid data and plot it as usual:
+
+```{r varest-map-obs, fig.cap="Uncertainty (CV) in prediction surface from bivariate spatial smooth with environmental covariates.  Sightings overlaid."}
+cv <- sqrt(var_split_nb_xy_ms$pred.var)/unlist(var_split_nb_xy_ms$pred)
+predgrid$CV <- cv
+p <- ggplot(predgrid) +
+  geom_tile(aes(x=x, y=y, fill=CV, width=10*1000, height=10*1000)) +
+  scale_fill_viridis_c() +
+  coord_equal() +
+  geom_point(aes(x=x,y=y, size=count), alpha=0.4,
+             data=dsm_nb_xy_ms$data[dsm_nb_xy_ms$data$count>0,]) +
+  theme_minimal()
+print(p)
+```
+
+Note that here we overplot the segments where sperm whales were observed (and scale the size of the point according to the number observed), using `geom_point()`. The `alpha=` argument makes the points semi-transparent.
+
+Try this with the other models you fitted and see what the differences are between the maps of coefficient of variation.
+
+
+## Extra credit
+
+- Try plotting the effort over a CV plot, using the data in the model.
+- The functions `dsm.var.prop` and `dsm.var.gam` can accept arbitrary splits in the data, not just whole areas or cells. Make a `list` with two elements: one a `data.frame` of all the cells with $y>0$ and one with $y\leq 0$. Estimate the variance for these regions. Note that you'll need to sum the offsets for each area to get the correct value to supply to `off.set=...`.
+
