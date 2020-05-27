@@ -1,0 +1,237 @@
+---
+title: Spatially explicit models for distance sampling data
+author: David L Miller
+subtitle: "Practical 4: Model checking"
+date: 8-12 June 2020
+
+---
+
+## Aims
+
+By the end of this practical, you should feel comfortable:
+
+- Looking at how changing `k` changes smooths
+- Plotting residuals vs. covariates
+- Fitting models to the residuals
+- Using `gam.check` and `rqgam.check`
+- Using `obs_exp`
+
+
+## Load data and packages
+
+
+```{r load-packages-03}
+library(Distance)
+library(dsm)
+library(ggplot2)
+library(knitr)
+```
+
+Load the data and the fitted `dsm` objects from the previous exercises:
+
+```{r load-data-03}
+load("spermwhale.RData")
+load("dsms.RData")
+load("df-models.RData")
+```
+
+We're going to check the DSMs that we fitted in the previous practical, then save those that we think are good!
+
+
+
+## Looking at how changing `k` changes smooths
+
+First checking that `k` is big enough, we should really do this during model fitting, but we've separate this up for the pratical exercises.
+
+First look at the text output of `gam.check`, are the values of `k'` for your models close to the `edf` in the outputted table. Here's a silly example where I've deliberately set `k` too small:
+
+```{r k-check-example}
+dsm_k_check_eg <- dsm(count ~ s(Depth, k=4),
+                    df_hn, segs, obs,
+                    family=tw())
+gam.check(dsm_k_check_eg)
+```
+
+Generally if the EDF is close to the value of `k` you supplied, it is worth doubling `k` and refitting to see what happens. You can always switch back to the smaller `k` if there is little difference. The `?choose.k` manual page can offer some guidance. 
+
+Continuing with that exmaple, if we double `k`:
+
+```{r k-check-example-double-k}
+dsm_k_check_eg <- dsm(count ~ s(Depth, k=8),
+                    df_hn, segs, obs,
+                    family=tw())
+gam.check(dsm_k_check_eg)
+```
+
+We get something much more reasonable. Doubling again
+
+```{r k-check-example-double-double-k}
+dsm_k_check_eg <- dsm(count ~ s(Depth, k=16),
+                    df_hn, segs, obs,
+                    family=tw())
+gam.check(dsm_k_check_eg)
+```
+
+We see almost no improvement, so might refit the second model here with `k=8`.
+
+Check to see if any of your models need this treatment.
+
+## Plotting residuals vs. covariates
+
+Now following from the slides, let's try plotting residuals vs. covariates. We can use these diagnostics (along with those in the following section) to assess how well the model has accounted for the structure in the data. This involves a little data manipulation and a little thought about how to chop up the covariate values.
+
+I'll show an example here using the not very good model we fitted above, so we can see what happens when things go wrong:
+
+```{r resid-covar}
+dsm_k_low <- dsm(count ~ s(Depth, k=4),
+                    df_hn, segs, obs,
+                    family=tw())
+
+# get the data used to fit the model
+resid_dat <- dsm_k_low$data
+
+# get the residuals
+resid_dat$resids <- residuals(dsm_k_low)
+
+# now let's chop x into 20 chunks
+resid_dat$x_chop <- cut(resid_dat$x,
+                        seq(min(resid_dat$x), max(resid_dat$x), len=20))
+
+# and plot the boxplot
+boxplot(resids~x_chop, data=resid_dat, ylab="Deviance residuals", xlab="x")
+```
+
+This seems to show that something is going on in the far east of the data -- there's a wide range of residuals there. Note that for our data the most easterly points are also North (since our data is somewhat diagonal in shape, with respect to the compass). So let's see if this is an issue with `x` alone (East-West) or `y` (North-Southness) is an issue too.
+
+```{r resid-covar-y}
+# now let's chop y into 20 chunks
+resid_dat$y_chop <- cut(resid_dat$y,
+                        seq(min(resid_dat$y), max(resid_dat$y), len=20))
+
+# and plot the boxplot
+boxplot(resids~y_chop, data=resid_dat, ylab="Deviance residuals", xlab="y")
+```
+
+We can also do this chopping with `Depth` (the only covariate in this model):
+
+```{r resid-covar-depth}
+# now let's chop Depth into 20 chunks
+resid_dat$Depth_chop <- cut(resid_dat$Depth,
+                        seq(min(resid_dat$Depth), max(resid_dat$Depth), len=20))
+
+boxplot(resids~Depth_chop, data=resid_dat, ylab="Deviance residuals", xlab="Depth")
+```
+
+Now we see something more pathological, there is pattern in these residuals.
+
+Let's make the same plot for a model with an spatial smooth in it:
+
+```{r resid-covar-depth-good}
+dsm_better <- dsm(count ~ s(x,y) + s(Depth),
+                    df_hn, segs, obs,
+                    family=tw())
+
+# get the data from the larger k model
+resid_dat <- dsm_better$data
+
+# get the residuals
+resid_dat$resids <- residuals(dsm_better)
+
+# now let's chop Depth into 20 chunks
+resid_dat$Depth_chop <- cut(resid_dat$Depth,
+                        seq(min(resid_dat$Depth), max(resid_dat$Depth), len=20))
+
+boxplot(resids~Depth_chop, data=resid_dat, ylab="Deviance residuals", xlab="Depth")
+```
+
+This looks better (note the change in vertical axis scale).
+
+Try this out with your models, using the covariates in the model and perhaps `x` and `y` too. You may want to change the number of chunks (via the `len` argument to `cut()`).
+
+
+## Fitting models to the residuals
+
+We can also fit a model to the residuals to see if there is residual structure left in the model. The idea here is that we know that the model won't fit perfectly everywhere, but is the difference between model and data (the residuals) systematic. Going back to our "bad" model above, we can see what happens when things go wrong:
+
+```{r resid-fit}
+# get the data used to fit the model
+resid_dat <- dsm_k_low$data
+
+# get the residuals
+resid_dat$resids <- residuals(dsm_k_low)
+
+# fit the model with the same predictors, but larger k
+resid_model_depth <- gam(resids ~ s(Depth, k=40),
+                         data=resid_dat,
+                         family=gaussian(), method="REML")
+```
+
+Note that we used the `gam` function from `mgcv` (which is what happens inside `dsm` anyway), to fit our residual model. The important things to note are:
+
+- `gam()` in place of `dsm()`.
+- The response is `resids`, the column we added above.
+- Theoretically we expect the deviance residuals to be distributed normally, so we set `family=gaussian()`.
+- Need to set `method="REML"` which happens automatically in `dsm()`, and makes sure the best method is used for fitting the smooths.
+
+We want to look at the EDFs associated with the terms in the model:
+
+```{r resid-fit-summaries}
+summary(resid_model_depth)
+```
+
+We can see that there's still a bit of pattern there, but not much (you can also try using `plot()` to investigate this).
+
+Now trying that with the better model:
+
+```{r resid-fit-good}
+# get the data used to fit the model
+resid_dat_better <- dsm_better$data
+
+# get the residuals
+resid_dat_better$resids <- residuals(dsm_better)
+
+# fit the model with the same predictors, but larger k
+resid_model_better <- gam(resids ~ s(Depth, bs="ts", k=40) + s(x,y, bs="ts", k=100),
+                         data=resid_dat_better,
+                         family=gaussian(), method="REML")
+```
+
+Now again looking at the EDFs:
+
+```{r resid-fit-good-summary}
+summary(resid_model_better)
+```
+
+We see that there's not much going on in this model. Again you can use `plot()` here, remembering to compare the vertical axis limits and look at the width of the confidence bands.
+
+Try this out with your model(s). What do you think is missing?
+
+## Using `rqgam.check`
+
+We can use `rqgam.check()` to look at the residual check plots for this model. Here we're looking for pattern in the plots that would indicate that there is unmodelled structure. Ideally the plot should look like a messy blob of points.
+
+```{r rqcheck}
+rqgam.check(dsm_better)
+```
+
+Try this out with your models and see if there is any pattern in the randomised quantile residuals.
+
+## Using `obs_exp`
+
+To compare the observed vs. expected counts from the model, we need to aggregate the data at some level. We can use `obs_exp()` to do this. For continuous covariates in the detection function or spatial moel, we just need to specify the cutpoints. For example:
+
+```{r oe-depth-bad, echo=TRUE}
+obs_exp(dsm_better, "Depth", c(0, 1000, 2000, 3000, 4000, 6000))
+```
+
+Try this out for your models.
+
+## Saving models
+
+Now save the models that you'd like to use to precict with later (that have good check results!): I recommend saving a few models so you can compare the results later.
+
+```{r save-models-03}
+# add your models here
+save(dsm_nb_xy_ms,
+     file="dsms-checked.RData")
+```

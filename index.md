@@ -65,7 +65,7 @@ Once R is installed, please run the following lines of code:
 ```r
 install.packages(c("optimx", "numDeriv", "Rsolnp", "pander", "dplyr",
                    "mrds", "Distance", "dsm",
-                   "ggplot2", "rgdal", "knitr", "plyr", "raster", 
+                   "ggplot2", "rgdal", "knitr", "plyr", "raster",
                    "reshape2", "viridis", "bitops", "rmarkdown",
                    "tweedie", "shapefiles", "remotes"))
 ```

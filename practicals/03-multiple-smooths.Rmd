@@ -13,6 +13,7 @@ By the end of this practical, you should feel comfortable:
 - Fitting DSMs with multiple smooth terms in them
 - Selecting smooth terms by $p$-values
 - Using shrinkage smoothers
+- Inspecting Q-Q plots select response distribution
 - Selecting between models using AIC
 - Investigating sensitivity sensitivity and path dependence
 
@@ -27,7 +28,7 @@ library(patchwork)
 library(knitr)
 ```
 
-Load the data processed from GIS and the fitted detection function objects from the previous exercises:
+Load the data and the fitted detection function objects from the previous exercises:
 ```{r load-data-03}
 load("spermwhale.RData")
 load("df-models.RData")
@@ -143,9 +144,19 @@ Try doing the same thing but using $p$-values. Are the resulting models differen
 
 Compare these results to the diagram [in the lecture notes](http://workshops.distancesampling.org/online-dsm-2020/slides/dsm3-multiple_smooths-section.html#15). Do your results differ?
 
+## Selecting the response distribution
 
+We can see how well a response distribution performs by comparing quantile-quantile plots (q-q plots). The `qq.gam` function can create these plots for you.
 
-## Comparing models
+```{r qqplot}
+qq.gam(dsm_nb_xy_ms, asp=1, rep=100)
+```
+
+The `rep` argument gives us the grey "envelope" that allows us to determine how far away the points are from the line.
+
+Try this out with your own models, comparing the results between two different response distributions (remember that you can change the response distribution using `family=` in the `dsm()` and our two usual options are `tw()` and `nb()`).
+
+## Comparing models by AIC
 
 As with the detection functions in practical 1, here is a quick function to generate model results tables with response distribution, smooth terms list and AIC:
 
@@ -192,7 +203,7 @@ So far we have only looked at models with `count` as the response. Try using a d
 
 ## Saving models
 
-Now save the models that you'd like to use to predict with later: I recommend saving as many models as you can so you can compare the results in the next practical.
+Now save the models that you'd like to use to check later: I recommend saving as many models as you can so you can compare the results later.
 
 ```{r save-models-03}
 # add your models here
