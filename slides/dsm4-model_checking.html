@@ -78,7 +78,7 @@ gam.check(dsm_tw_xy_depth)
 ## 
 ##             k'   edf k-index p-value    
 ## s(x,y)   29.00 11.11    0.65  &lt;2e-16 ***
-## s(Depth)  9.00  3.84    0.81    0.34    
+## s(Depth)  9.00  3.84    0.81    0.37    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -148,7 +148,7 @@ gam.check(dsm_x_tw)
 ## indicate that k is too low, especially if edf is close to k'.
 ## 
 ##        k'  edf k-index p-value
-## s(x) 9.00 4.96    0.76    0.39
+## s(x) 9.00 4.96    0.76    0.38
 ```
 
 ---
@@ -166,7 +166,7 @@ gam.check(dsm_x_tw_k)
 ## 
 ## Method: REML   Optimizer: outer newton
 ## full convergence after 7 iterations.
-## Gradient range [-2.301246e-08,3.930687e-09]
+## Gradient range [-2.30124e-08,3.930703e-09]
 ## (score 409.9245 &amp; scale 6.033913).
 ## Hessian positive definite, eigenvalue range [0.7678456,302.0336].
 ## Model rank =  20 / 20 
@@ -175,7 +175,7 @@ gam.check(dsm_x_tw_k)
 ## indicate that k is too low, especially if edf is close to k'.
 ## 
 ##         k'   edf k-index p-value
-## s(x) 19.00  5.25    0.76    0.42
+## s(x) 19.00  5.25    0.76    0.35
 ```
 
 ---
@@ -264,19 +264,19 @@ resid_fit &lt;- gam(resid~s(Depth, bs="ts", k=20) +
 ## 
 ## Parametric coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)  -0.4945     0.0327  -15.12   &lt;2e-16 ***
+## (Intercept) -0.49454    0.03274   -15.1   &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Approximate significance of smooth terms:
-##            edf Ref.df     F  p-value    
-## s(Depth) 2.324     19 1.057 1.95e-05 ***
-## s(NPP)   1.845     19 0.193    0.117    
+##              edf Ref.df     F p-value    
+## s(Depth) 2.56621     19 1.230 4.9e-06 ***
+## s(NPP)   0.03322     19 0.002   0.316    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## R-sq.(adj) =  0.0267   Deviance explained = 3.09%
-## GCV = 1.0202  Scale est. = 1.0147    n = 949
+## R-sq.(adj) =  0.0241   Deviance explained = 2.67%
+## -REML =   1362  Scale est. = 1.0174    n = 949
 ```
 
 ---
@@ -330,18 +330,89 @@ class: inverse, middle, center
 - Cycle through checks, make changes recheck
 
 ---
+# Observed vs. expected
+class: inverse, middle, center
+
+---
+# Response vs. fitted values
+
+- `gam.check` "response vs. fitted values"
+- BUT smooths are "wrong" everywhere in particular
+
+![](dsm4-model_checking_files/figure-html/gamcheck-response-fitted-1.png)&lt;!-- --&gt;
+
+---
+# Summarize over covariate chunks
+
+- On average the smooth is right
+- Check aggregations of count
+- Here detection function has Beaufort as factor
+
+
+
+
+```r
+obs_exp(dsm_bad, "Beaufort_f")
+```
+
+```
+##             [0,1]    (1,2]    (2,3]    (3,4]    (4,5]
+## Observed  1.00000 95.45000 103.5500 34.70000 4.000000
+## Expected 20.28781 54.57573 136.3581 53.98742 5.949304
+```
+
+
+```r
+obs_exp(dsm_good, "Beaufort_f")
+```
+
+```
+##           [0,1]    (1,2]    (2,3]    (3,4]    (4,5]
+## Observed 1.0000 95.45000 103.5500 34.70000 4.000000
+## Expected 6.8887 45.18587 118.5747 53.81458 4.909644
+```
+
+---
+# Observed vs. expected for environmental covariates
+
+- Just need to specify the cutpoints
+
+
+```r
+obs_exp(dsm_bad, "Depth", c(0, 1000, 2000, 3000, 4000, 6000))
+```
+
+```
+##          (0,1e+03] (1e+03,2e+03] (2e+03,3e+03] (3e+03,4e+03] (4e+03,6e+03]
+## Observed   4.00000      52.53333     139.16667      35.00000       8.00000
+## Expected  85.65231      37.98341      63.40892      53.78726      30.32642
+```
+
+
+
+```r
+obs_exp(dsm_good, "Depth", c(0, 1000, 2000, 3000, 4000, 6000))
+```
+
+```
+##          (0,1e+03] (1e+03,2e+03] (2e+03,3e+03] (3e+03,4e+03] (4e+03,6e+03]
+## Observed  4.000000      52.53333      139.1667      35.00000      8.000000
+## Expected  5.308628      48.14915      128.7962      38.76013      8.359456
+```
+
+---
 # Summary
 
 - Convergence
   - Rarely an issue
-  - Check your thinking about the model
 - Basis size
   - `k` is a maximum
   - Double and see what happens
 - Residuals
   - Deviance and randomised quantile
   - check for artifacts
-- `rqgam.check` is your friend
+- Observed vs. expected
+  - Compare aggregate information
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
