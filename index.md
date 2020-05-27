@@ -60,14 +60,11 @@ Session     | Part      | Description
 
 Please make sure you have the latest version of R on your computer (version 4). You can download this from: [https://cran.r-project.org/](https://cran.r-project.org/)
 
-Once R is installed, please run the following lines of code:
+Once R is installed, please run the following line of code:
 
 ```r
-install.packages(c("optimx", "numDeriv", "Rsolnp", "pander", "dplyr",
-                   "mrds", "Distance", "dsm",
-                   "ggplot2", "rgdal", "knitr", "plyr", "raster",
-                   "reshape2", "viridis", "bitops", "rmarkdown",
-                   "tweedie", "shapefiles", "remotes"))
+install.packages(c("rmarkdown", "Distance", "ggplot2", "knitr",
+                   "dsm", "patchwork", "plyr"))
 ```
 
 to ensure that you have the latest versions of all the R packages you need for the course.
