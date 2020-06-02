@@ -28,30 +28,35 @@ Links in the "Part" column below will take you to the corresponding slides or pr
 
 For the practicals you need [`spermwhale.RData`](data/spermwhale.RData), which contains all the R objects you will need (see below for R package requirements).
 
-Practicals are provided in RMarkdown format. If you aren't familiar with RMarkdown [here is a quick introduction from RStudio](https://rmarkdown.rstudio.com/lesson-1.html) (you only need to read the first 4 sections to know enough for this course).
+Practicals are provided as RMarkdown and as HTML pages. If you aren't familiar with RMarkdown [here is a quick introduction from RStudio](https://rmarkdown.rstudio.com/lesson-1.html) (you only need to read the first 4 sections to know enough for this course).
 
 
-Session     | Part      | Description
-------------|-----------|--------------
-*Monday*    | Lecture   | Distance sampling refresher
-            |           | What is a DSM?
-            |           | Getting to know the data
-            | Practical | Detection function fitting
-*Tuesday*   | Lecture   | Recap/solutions for "Detection function fitting"
-            |           | Generalized additive models
-            | Practical | Fitting simple DSMs
-*Wednesday* | Lecture   | Recap/solutions for "Fitting simple DSMs"
-            |           | Multiple smooths
-            |           | Model selection
-            | Practical | Fitting and selecting more complex models
-*Thursday*  | Lecture   | Recap/solutions for "Fitting and selecting more complex models"
-            |           | Model checking
-            | Practical | Checking previous models
-*Friday*    | Lecture   | Recap/solutions for "Checking previous models"
-            |           | Making predictions
-            |           | Estimating variance
-            |           | Practical advice
-            | Practical | Making predictions, variance estimation, maps
+Session     | Part                                                         | Description
+------------|--------------------------------------------------------------|--------------
+*Monday*    | [Lecture 1](slides/dsm1-refresher-what_is_a_dsm.html)        | Distance sampling refresher
+            |                                                              | What is a DSM?
+            |                                                              | Getting to know the data
+            | [Practical 1 (Rmd)](practicals/01-detection-functions.Rmd)   | Detection function fitting
+            | [Practical 1 (html)](practicals/01-detection-functions.html) |
+*Tuesday*   | [Lecture 2](slides/dsm2-gams.html)                           | Recap/solutions for "Detection function fitting"
+            |                                                              | Generalized additive models
+            | [Practical 2 (Rmd)](practicals/02-simple-dsms.Rmd)          | Fitting simple DSMs
+            | [Practical 2 (html)](practicals/02-simple-dsms.html)         |
+*Wednesday* | [Lecture 3](slides/dsm3-multiple_smooths-section.html)       | Recap/solutions for "Fitting simple DSMs"
+            |                                                              | Multiple smooths
+            |                                                              | Model selection
+            | [Practical 3 (Rmd)](practicals/03-multiple-smooths.Rmd)     | Fitting and selecting more complex models
+            | [Practical 3 (html)](practicals/03-multiple-smooths.html)    |
+*Thursday*  | [Lecture 4](slides/dsm4-model_checking.html)                 | Recap/solutions for "Fitting and selecting more complex models"
+            |                                                              | Model checking
+            | [Practical 4 (Rmd)](practicals/04-model-checking.html)      | Checking previous models
+            | [Practical 4 (html)](practicals/04-model-checking.html)      |
+*Friday*    | [Lecture 5](slides/dsm5-prediction-variance-advice.html)     | Recap/solutions for "Checking previous models"
+            |                                                              | Making predictions
+            |                                                              | Estimating variance
+            |                                                              | Practical advice
+            | [Practical 5 (Rmd)](practicals/05-prediction-variance.Rmd)  | Making predictions, variance estimation, maps
+            | [Practical 5 (html)](practicals/05-prediction-variance.html) |
 
 
 
