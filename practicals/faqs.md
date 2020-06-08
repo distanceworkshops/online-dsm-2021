@@ -8,7 +8,9 @@ layout: index
 
 ## `cannot open the connection` and `No such file or directory` when loading data
 
-This is usually caused by the data not being in the working directory that R/RStudio is using. You can check the current working directory using the following:
+First: make sure that you downloaded the data. For the practicals you need [`spermwhale.RData`](../data/spermwhale.RData), which contains all the R objects you will need.
+
+Then: this is often caused by the data not being in the working directory that R/RStudio is using. You can check the current working directory using the following:
 
 ```r
 getwd()
