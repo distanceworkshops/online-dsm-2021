@@ -49,7 +49,7 @@ Session     | Part                                                         | Des
             | [Practical 3 (html)](practicals/03-multiple-smooths.html)    |
 *Thursday*  | [Lecture 4](slides/dsm4-model_checking.html)                 | Recap/solutions for "Fitting and selecting more complex models"
             |                                                              | Model checking
-            | [Practical 4 (Rmd)](practicals/04-model-checking.html)      | Checking previous models
+            | [Practical 4 (Rmd)](practicals/04-model-checking.Rmd)      | Checking previous models
             | [Practical 4 (html)](practicals/04-model-checking.html)      |
 *Friday*    | [Lecture 5](slides/dsm5-prediction-variance-advice.html)     | Recap/solutions for "Checking previous models"
             |                                                              | Making predictions
