@@ -440,7 +440,7 @@ We can then look at the abundance estimates. `dht` calculates this for individua
 Nhat_dht_hr_beau
 ```
 
-
+We can keep this abundance and CV in mind as we explore the spatial models through the course.
 
 More examples of doing these kinds of analyses are available on the [distance sampling exercises page](http://examples.distancesampling.org).
 
