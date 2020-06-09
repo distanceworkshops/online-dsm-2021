@@ -30,6 +30,8 @@ library(cowplot)
 theme_set(theme_cowplot(20))
 ```
 
+class: title-slide, inverse, center, middle
+
 # Lecture 2 : Generalized Additive Models
 
 <div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px">
