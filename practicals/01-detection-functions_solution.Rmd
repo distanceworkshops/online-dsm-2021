@@ -386,8 +386,8 @@ We need to put our segments back together into transects to assemble the sample 
 The code here is fiddly, so don't worry too much about understanding it. This is only because I'm trying to get `dsm` formatted data to work for `dht`! In practice this would be easier.
 
 ```{r sample-tab}
-# load dplyr for data manipulations
 library(dplyr)
+library(tidyr)
 
 transects <- segs %>%
    # include only the TransectID and Effort columns
@@ -428,7 +428,7 @@ obs_dht$Region.Label <- "StudyArea"
 Now we can use `dht` to calculate the abundance for `df_hr_beau`, say (here I'm just re-using the `dist_dht` table again as the observation data):
 
 ```{r Nhat-dht}
-Nhat_dht_hr_beau <- dht(model=df_hr_beau_dht$ddf, 
+Nhat_dht_hr_beau <- dht(model=df_hr_beau$ddf, 
                         region.table=region.table,
                         sample.table=transects,
                         obs.table=obs_dht)
@@ -440,7 +440,7 @@ We can then look at the abundance estimates. `dht` calculates this for individua
 Nhat_dht_hr_beau
 ```
 
-(There's a slight difference here because `dht` uses the average group size, rather than the exact )
+
 
 More examples of doing these kinds of analyses are available on the [distance sampling exercises page](http://examples.distancesampling.org).
 
