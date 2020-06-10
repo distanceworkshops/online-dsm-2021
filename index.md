@@ -36,12 +36,12 @@ Session     | Part                                                          | De
 *Monday*    | [Lecture 1](slides/dsm1-refresher-what_is_a_dsm.html)         | Distance sampling refresher
             | [Lecture 1 (PDF)](slides/dsm1-refresher-what_is_a_dsm.pdf)    | What is a DSM?
             |                                                               | Getting to know the data
-            | Practical 1 [(Rmd)](practicals/01-detection-functions.Rmd)  ([html](practicals/01-detection-functions.html))   | Detection function fitting
-            | Practical 1 solutions [(Rmd)](practicals/01-detection-functions_solution.Rmd)  ([html](practicals/01-detection-functions_solution.html))             |
+            | Practical 1 ([Rmd](practicals/01-detection-functions.Rmd))  ([html](practicals/01-detection-functions.html))   | Detection function fitting
+            | Practical 1 solutions ([Rmd](practicals/01-detection-functions_solution.Rmd))  ([html](practicals/01-detection-functions_solution.html))             |
 *Tuesday*   | [Lecture 2](slides/dsm2-gams.html)                            | Recap/solutions for "Detection function fitting"
             | [Lecture 2 (PDF)](slides/dsm2-gams.pdf)                       | Generalized additive models
-            | Practical 2 [(Rmd)](practicals/02-simple-dsms.Rmd) [(html)](practicals/02-simple-dsms.html)           | Fitting simple DSMs
-            | Practical 2 solutions [(Rmd)](practicals/02-simple-dsms_solution.Rmd) [(html)](practicals/02-simple-dsms_solution.html)         |
+            | Practical 2 ([Rmd](practicals/02-simple-dsms.Rmd)) ([html](practicals/02-simple-dsms.html))           | Fitting simple DSMs
+            | Practical 2 solutions ([Rmd](practicals/02-simple-dsms_solution.Rmd)) ([html](practicals/02-simple-dsms_solution.html))         |
 *Wednesday* | [Lecture 3](slides/dsm3-multiple_smooths-section.html)        | Recap/solutions for "Fitting simple DSMs"
             | [Lecture 3 (PDF)](slides/dsm3-multiple_smooths-section.pdf)   | Multiple smooths
             |                                                               | Model selection
