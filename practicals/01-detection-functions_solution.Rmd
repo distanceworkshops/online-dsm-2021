@@ -474,7 +474,8 @@ Save your top few models in an `RData` file, so we can load them up later on. We
 **Saving model objects**
 
 ```{r save-models-01}
-save(df_hn, df_hr, df_hn_beau, df_hr_beau, df_hn_beau_size, df_hr_beau_size,
+save(df_hn, df_hr, df_hn_beau, df_hr_beau, df_hn_beau_size,
+     df_hr_beau_size, df_hr_ss_size,
      distdata,
      file="df-models.RData")
 ```
