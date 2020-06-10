@@ -1,0 +1,383 @@
+---
+title: Spatially explicit models for distance sampling data
+author: David L Miller
+subtitle: "Practical 2: Simple density surface models"
+date: 8-12 June 2020
+
+---
+
+## Aims
+
+By the end of this practical, you should feel comfortable:
+
+- Fitting a density surface model using `dsm()`
+- Understanding what the objects that go into a `dsm()` call
+- Understanding the role of the response in the `formula=` argument
+- Understanding the output of `summary()` when called on a `dsm` object
+- Increasing the `k` parameter of smooth terms to increase their flexibility
+
+The example code below uses the `df_hn` detection function in the density surface models. You can substitute this for your own best model as you go, or copy and paste the code at the end and see what results you get using your model for the detection function.
+
+In this practical, we're just going to do basic comparisons looking at plots and `summary` output. We'll get more into model comparison in later practicals.
+
+---
+
+**Solutions are given between these horizontal lines with bold headers**
+
+The "solutions" presented here are not definitive, many modelling options are possible.
+
+Here I'll use a few different detection functions that I fitted in the first practical. To run the code in this file, you'll first need to have run the first practical solution, to get the correct outputs.
+
+---
+
+## Load the packages and data
+
+
+```{r load-packages-02}
+library(Distance)
+library(dsm)
+library(ggplot2)
+library(knitr)
+```
+
+Loading sperm whale data again and the `RData` files where we saved our results:
+```{r load-data-02}
+load("spermwhale.RData")
+load("df-models.RData")
+```
+
+## Pre-model fitting
+
+Before we fit a model using `dsm()` we must first remove the observations from the spatial data that we excluded when we fitted the detection function -- those observations at distances greater than the truncation.
+
+```{r truncate-obs-02}
+obs <- obs[obs$distance <= df_hn$ddf$meta.data$width, ]
+```
+
+Here we've used the value of the truncation stored in the detection function object, but we could also use the numeric value (which we can also find by checking the detection function's `summary()`).
+
+(If we don't do this, the DSM will still fit fine, we just get a warning.)
+
+## Fitting DSMs
+
+Using the data that we've saved so far, we can build a call to the `dsm()` function and fit out first density surface model. Here we're only going to look at models that include spatial smooths.
+
+Let's start with a very simple model -- a bivariate smooth of `x` and `y`:
+
+```{r nb-xy-02}
+dsm_nb_xy <- dsm(count~s(x, y, k=25),
+                 ddf.obj=df_hn, segment.data = segs, 
+                 observation.data=obs,
+                 family=nb())
+```
+
+Note again that we try to have informative model object names so that we can work out what the main features of the model were from its name alone.
+
+We can look at a `summary()` of this model. Look through the summary output and try to pick out the important information based on what we've talked about in the lectures so far.
+
+```{r nb-xy-summary}
+summary(dsm_nb_xy)
+```
+
+Things to look for:
+
+- Was the bivariate smooth of space (`s(x, y)`) significant at the highest level?
+- What was the effective degrees of freedom (EDF) for this model? How does that compare with the `k` we provided?
+- Does the number of observations (`n=`) match the number of rows in `segs`?
+
+---
+
+**Summary output**
+
+Answering the above questions:
+
+- From the `summary` output we can see that the bivariate term, `s(x,y)` is significant at the "0" level -- that's not too surprising given it's the only term in the model though!
+- The EDF for the model was about 14. We set `k=25` above, so we're nowhere near using all of the degrees of freedom we gave the model. Note that we don't need to reduce `k`, the penalty has done its job and reduced the wigglyness of the model accordingly.
+- We see from the `summary` that `n = 949`, we can check the number of rows in the segment data:
+
+```r
+nrow(segs)
+```
+
+and confirm that's correct. These might not match if you have `NA` ("not available") values in your segment data, for example if you have covariates that don't have values (SST due to cloud for example). If there are `NA`s where values are needed, the whole row will be dropped. It's usually worth checking this to make sure you're fitting to the data that you think you are.
+
+
+---
+
+
+### Visualising output
+
+As discussed in the lectures, the `plot` output is not terribly useful for bivariate smooths like these. We'll use `vis.gam()` to visualise the smooth instead:
+
+```{r nb-xy-visgam, fig.width=5, fig.height=5, fig.cap="Fitted surface (on link scale) for s(x,y)"}
+vis.gam(dsm_nb_xy, view=c("x","y"), plot.type="contour", 
+        too.far=0.1, main="s(x,y) (link scale)", asp=1)
+```
+
+Notes:
+
+1. The plot is on the scale of the link function, the offset is not taken into account -- the contour values do not represent abundance!
+2. We set `view=c("x","y")` to display the smooths for `x` and `y` (we can choose any two variables in our model to display like this)
+3. `plot.type="contour"` gives this "flat" plot, set `plot.type="persp"` for a "perspective" plot, in 3D.
+4. The `too.far=0.1` argument displays the values of the smooth not "too far" from the data (try changing this value to see what happens).
+5. `asp=1` ensures that the aspect ratio of the plot is 1, making the pixels square.
+6. Read the `?vis.gam` manual page for more information on the plotting options.
+
+### Setting basis complexity
+
+We can set the basis complexity via the `k` argument to the `s()` term in the formula. For example the following re-fits the above model with a much smaller basis complexity than before:
+
+```{r nb-xy-smallk}
+dsm_nb_xy_smallk <- dsm(count~s(x, y, k=10),
+                        ddf.obj=df_hn, segment.data = segs,
+                        observation.data=obs,
+                        family=nb())
+```
+
+Compare the output of `vis.gam()` for this model to the model with a larger basis complexity.
+
+---
+**Comparing `k` values**
+
+Plotting these side-by=side
+
+```{r comp-visgam, fig.width=12, fig.height=5}
+par(mfrow=c(1,2))
+vis.gam(dsm_nb_xy, view=c("x","y"), plot.type="contour", 
+        too.far=0.1, main="s(x,y, k=25) (link scale)", asp=1)
+
+vis.gam(dsm_nb_xy_smallk, view=c("x","y"), plot.type="contour", 
+        too.far=0.1, main="s(x,y, k=10) (link scale)", asp=1)
+```
+
+We can see the right plot looks flatter than the left, with less definition and peaks/troughs.
+
+Looking at the `summary`:
+
+```{r smallk-summ}
+summary(dsm_nb_xy_smallk)
+```
+
+We see that the EDF is ~7.5, fairly close to 10. If we'd set `k=10` to start with, we'd have doubled `k`, as it doesn't seem big enough.
+
+---
+
+## Univariate models
+
+Instead of fitting a bivariate smooth of `x` and `y` using `s(x, y)`, we could instead use the additive nature and fit the following model:
+
+```{r additive-xy-nb}
+dsm_nb_x_y <- dsm(count~s(x)+ s(y),
+                 ddf.obj=df_hn, segment.data = segs, 
+                 observation.data=obs,
+                 family=nb())
+```
+
+Compare this model with `dsm_nb_xy` using `vis.gam()` and `summary()`.
+
+---
+
+**Comparing to the univariate model**
+
+First taking a look at the summary:
+
+```{r summary_x_y}
+summary(dsm_nb_x_y)
+```
+
+we can see that the `s(x)` and `s(y)` terms have EDFs lower than the (default) `k=10` they were given. The combined EDFs are bigger than those for the model with `s(x,y)` -- perhaps because these terms have a lot of work to do without being able to properly model the interaction. We can see this when plotting the `s(x) + s(y)` model alongside the `s(x,y)` model:
+
+```{r comp-visgam2, fig.width=12, fig.height=5}
+par(mfrow=c(1,2))
+vis.gam(dsm_nb_xy, view=c("x","y"), plot.type="contour", 
+        too.far=0.1, main="s(x,y, k=25) (link scale)", asp=1)
+
+vis.gam(dsm_nb_x_y, view=c("x","y"), plot.type="contour", 
+        too.far=0.1, main="s(x,y, k=10) (link scale)", asp=1)
+```
+
+and at the plot of the smooths alone:
+
+``{r plot_x_y}
+plot(dsm_nb_x_y, pages=1)
+```
+
+the `s(x) + s(y)` model is additive, we don't allow the interactions that we can have in `s(x,y)`.
+
+Generally, it's best to start with `s(x,y)` when you're using (projected) spatial coordinates.
+
+---
+
+## Tweedie response distribution
+
+So far, we've used `nb()` as the response -- the negative binomial distribution. We can also try out the Tweedie distribution as a response by replacing `nb()` with `tw()`.
+
+Try this out and compare the results.
+
+---
+
+**Refitting with Tweedie**
+
+```{r tw-mods}
+dsm_tw_xy <- dsm(count~s(x, y, k=25),
+                 ddf.obj=df_hn, segment.data = segs, 
+                 observation.data=obs,
+                 family=tw())
+                 
+dsm_tw_x_y <- dsm(count~s(x)+ s(y),
+                 ddf.obj=df_hn, segment.data = segs, 
+                 observation.data=obs,
+                 family=tw())
+```
+
+Looking at the `summary` results for each:
+
+```{r tw-summaries}
+summary(dsm_tw_xy)
+summary(dsm_tw_x_y)
+```
+
+In the `summary` results alone we don't see too much of a difference here. The `Family:` lines are different and there are some small differences between the EDFs/deviance explained etc. As we'll see later when we look at model checking, the `summary` results are not the end of the story.
+
+---
+
+# Estimated abundance as response
+
+So far we've just used `count` as the response. That is, we adjusted the offset of the model to make it take into account the "effective area" of the segments (see lecture notes for a refresher).
+
+Instead of using `count` we could use `abundance.est`, which will leave the segment areas as they are and calculate the Horvitz-Thompson estimates of the abundance per segment and use that as the response in the model. This is most useful when we have covariates in the detection function (though we can use it any time).
+
+Try copying the code that fits the model `dsm_nb_xy` and make a model `dsm_nb_xy_ae` that replaces `count` for `abundance.est` in the model formula and uses the `df_hr_ss_size` detection function. Compare the results of `summary` and `plot` output between this and the count model.
+
+---
+
+**Estimated abundance response models**
+
+Fitting the requested model, with `abundance.est` as the response, using the `df_hr_ss_size` model that I saved in the previous 
+
+```{r nb-xy-ae}
+dsm_nb_xy_ae <- dsm(abundance.est~s(x, y, k=25),
+                    ddf.obj=df_hr_ss_size, segment.data = segs, 
+                    observation.data=obs,
+                    family=nb())
+```
+
+Once it's fitted, we can look at the `summary`:
+
+```{r nb-xy-ae-summ}
+summary(dsm_nb_xy_ae)
+```
+
+Comparing these results to those from `dsm_nb_xy`, we don't see too much of a difference here looking at the `summary` output alone. Again, we'll see differences through the course as we have more tools available to investigate what's going on.
+
+---
+
+## Save models
+
+It'll be interesting to see how these models compare to the more complex models we'll see later on. Let's save the fitted models at this stage (add your own models to this list so you can use them later).
+
+---
+
+**Saving models**
+
+```{r save-models-02}
+# add your models here
+save(dsm_nb_x_y, dsm_nb_xy, dsm_tw_x_y, dsm_tw_xy, dsm_nb_xy_ae,
+     file="dsms-xy.RData")
+```
+
+---
+
+
+## Extra credit
+
+If you have time, try the following:
+
+- Make the `k` value very big (~100 or so), what do you notice?
+
+---
+
+**Making `k` really big**
+
+Be warned, this might take a while to fit!
+
+```{r nb-xy-bigk}
+dsm_nb_xy_bigk <- dsm(count~s(x, y, k=100),
+                        ddf.obj=df_hn, segment.data = segs,
+                        observation.data=obs,
+                        family=nb())
+```
+
+Looking at the `summary` output:
+
+```{r bigk-summ}
+summary(dsm_nb_xy_bigk)
+```
+
+Now we see that the EDF has increased a bit! BUT not all the way up to the 100 degrees of freedom that were possible.
+
+Plotting that along side the small and medium `k` values:
+
+```{r visgamk, fig.width=15, fig.height=5}
+par(mfrow=c(1,3))
+vis.gam(dsm_nb_xy_smallk, view=c("x","y"), plot.type="contour", 
+        too.far=0.1, main="s(x,y, k=10) (link scale)", asp=1)
+
+vis.gam(dsm_nb_xy, view=c("x","y"), plot.type="contour", 
+        too.far=0.1, main="s(x,y, k=25) (link scale)", asp=1)
+
+vis.gam(dsm_nb_xy_bigk, view=c("x","y"), plot.type="contour", 
+        too.far=0.1, main="s(x,y, k=100) (link scale)", asp=1)
+```
+
+We can see a lot more detail in the plot now. 
+
+The important thing to think about here is that whenever we increase `k` we might expect some increase in the EDF. If we got `k` right then the change is small. In this case the change is fairly big, so we might want to use `k=50` as a precaution. However, this is a bit of an artificial situation: we don't have other environmental covariates in the model, so the `s(x,y)` term is doing a lot of work! In a model with other covariates we'd expect them to explain more of the variation.
+
+---
+
+---
+
+**Summarizing models**
+
+To summarize multiple models, the following small bit of code might help:
+
+```{r summarize-models}
+# function to extract various bits of information from
+# a model object, you can adapt to be more informative
+summarize_dsm <- function(model){
+
+  summ <- summary(model)
+
+  data.frame(response = model$family$family,
+             terms    = paste(rownames(summ$s.table), collapse=", "),
+             AIC      = AIC(model)
+            )
+
+}
+
+# make a list of models, in this case just the count models
+model_list <- list(dsm_nb_xy, dsm_nb_x_y, dsm_tw_xy, dsm_tw_x_y)
+
+# run this over each model in the list and make a table
+library(plyr)
+summary_table <- ldply(model_list, summarize_dsm)
+row.names(summary_table) <- c("dsm_nb_xy", "dsm_nb_x_y", "dsm_tw_xy", "dsm_tw_x_y")
+```
+
+We can then again use the `kable` function to make a table, in this case sorting by AIC
+
+```{r sort-table}
+summary_table <- summary_table[order(summary_table$AIC),]
+```
+
+Then the table:
+
+```{r print-table, results="asis"}
+kable(summary_table)
+```
+
+We'll discuss how to decide between the models in the lectures!
+
+---
+
