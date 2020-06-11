@@ -54,7 +54,7 @@ gam.check(dsm_k_check_eg)
 
 Generally if the EDF is close to the value of `k` you supplied, it is worth doubling `k` and refitting to see what happens. You can always switch back to the smaller `k` if there is little difference. The `?choose.k` manual page can offer some guidance. 
 
-Continuing with that exmaple, if we double `k`:
+Continuing with that example, if we double `k`:
 
 ```{r k-check-example-double-k}
 dsm_k_check_eg <- dsm(count ~ s(Depth, k=8),
@@ -218,7 +218,7 @@ Try this out with your models and see if there is any pattern in the randomised 
 
 ## Using `obs_exp`
 
-To compare the observed vs. expected counts from the model, we need to aggregate the data at some level. We can use `obs_exp()` to do this. For continuous covariates in the detection function or spatial moel, we just need to specify the cutpoints. For example:
+To compare the observed vs. expected counts from the model, we need to aggregate the data at some level. We can use `obs_exp()` to do this. For continuous covariates in the detection function or spatial model, we just need to specify the cut points. For example:
 
 ```{r oe-depth-bad, echo=TRUE}
 obs_exp(dsm_better, "Depth", c(0, 1000, 2000, 3000, 4000, 6000))
@@ -228,7 +228,7 @@ Try this out for your models.
 
 ## Saving models
 
-Now save the models that you'd like to use to precict with later (that have good check results!): I recommend saving a few models so you can compare the results later.
+Now save the models that you'd like to use to predict with later (that have good check results!): I recommend saving a few models so you can compare the results later.
 
 ```{r save-models-03}
 # add your models here
