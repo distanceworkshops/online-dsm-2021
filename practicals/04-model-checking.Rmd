@@ -41,7 +41,7 @@ We're going to check the DSMs that we fitted in the previous practical, then sav
 
 ## Looking at how changing `k` changes smooths
 
-First checking that `k` is big enough, we should really do this during model fitting, but we've separate this up for the pratical exercises.
+First checking that `k` is big enough, we should really do this during model fitting, but we've separated this up for the practical exercises.
 
 First look at the text output of `gam.check`, are the values of `k'` for your models close to the `edf` in the outputted table. Here's a silly example where I've deliberately set `k` too small:
 
