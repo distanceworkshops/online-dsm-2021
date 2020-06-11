@@ -414,12 +414,12 @@ load("dsms-xy.RData")
 
 ```{r apply-summary}
 # add your models to this list!
-model_list <- list(dsm_nb_xy_ms, dsm_tw_xy_ms, dsm_nb_noxy_ms_p1_3, dsm_nb_xy, dsm_tw_xy)
+model_list <- list(dsm_nb_xy_ms_p1_4, dsm_tw_xy_ms, dsm_nb_noxy_ms_p1_3, dsm_nb_xy, dsm_tw_xy)
 # use plyr to go from list to data.frame via summarize_dsm
 library(plyr)
 summary_table <- ldply(model_list, summarize_dsm2)
 # make the row names whatever you like
-row.names(summary_table) <- c("`dsm_nb_xy_ms` (p-value select))",
+row.names(summary_table) <- c("`dsm_nb_xy_ms_p1_4` (p-value select))",
                               "`dsm_tw_xy_ms` (p-value model select)",
                               "`dsm_nb_noxy_ms_p1_3` (no xy)",
                               "`dsm_nb_xy` (xy only)",
@@ -512,7 +512,7 @@ Now save the models that you'd like to use to check later: I recommend saving as
 
 ```{r save-models-03}
 # add your models here
-save(dsm_nb_xy_ms, dsm_tw_xy_ms, dsm_nb_noxy_ms_p1_3,
+save(dsm_nb_xy_ms_p1_4, dsm_tw_xy_ms, dsm_nb_noxy_ms_p1_3,
      dsm_nb_xy, dsm_tw_xy, dsm_nb_xy_ms_ae, 
      dsm_tw_xy_ms_ae,
      file="dsms.RData")

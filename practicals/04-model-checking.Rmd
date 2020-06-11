@@ -38,7 +38,6 @@ load("df-models.RData")
 We're going to check the DSMs that we fitted in the previous practical, then save those that we think are good!
 
 
-
 ## Looking at how changing `k` changes smooths
 
 First checking that `k` is big enough, we should really do this during model fitting, but we've separated this up for the practical exercises.
@@ -51,6 +50,8 @@ dsm_k_check_eg <- dsm(count ~ s(Depth, k=4),
                     family=tw())
 gam.check(dsm_k_check_eg)
 ```
+
+**Note here again I'm using a "chunk" option to suppress the plots printed by `gam.check`**
 
 Generally if the EDF is close to the value of `k` you supplied, it is worth doubling `k` and refitting to see what happens. You can always switch back to the smaller `k` if there is little difference. The `?choose.k` manual page can offer some guidance. 
 
