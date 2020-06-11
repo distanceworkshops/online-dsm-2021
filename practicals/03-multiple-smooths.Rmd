@@ -15,7 +15,7 @@ By the end of this practical, you should feel comfortable:
 - Using shrinkage smoothers
 - Inspecting Q-Q plots select response distribution
 - Selecting between models using AIC
-- Investigating sensitivity sensitivity and path dependence
+- Investigating sensitivity and path dependence
 
 ## Load data and packages
 
@@ -195,7 +195,7 @@ kable(summary_table,
 
 ## Extra credit: estimated abundance as a response
 
-So far we have only looked at models with `count` as the response. Try using a detection function with covariates and use `abundance.est`, instead of `count`, as the response in the chunk below:
+So far we have only looked at models with `count` as the response. Try using a detection function with observation-level covariates and use `abundance.est`, instead of `count`, as the response in the chunk below:
 
 ```{r abund-est}
 

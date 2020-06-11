@@ -1,0 +1,519 @@
+---
+title: Spatially explicit models for distance sampling data
+author: David L Miller
+subtitle: "Practical \"solution\" 3: Multiple smooths and model selection"
+date: 8-12 June 2020
+
+---
+
+## Aims
+
+By the end of this practical, you should feel comfortable:
+
+- Fitting DSMs with multiple smooth terms in them
+- Selecting smooth terms by $p$-values
+- Using shrinkage smoothers
+- Inspecting Q-Q plots select response distribution
+- Selecting between models using AIC
+- Investigating sensitivity and path dependence
+
+## Load data and packages
+
+
+```{r load-packages-03}
+library(Distance)
+library(dsm)
+library(ggplot2)
+library(patchwork)
+library(knitr)
+```
+
+Load the data and the fitted detection function objects from the previous exercises:
+```{r load-data-03}
+load("spermwhale.RData")
+load("df-models.RData")
+```
+
+## Exploratory analysis
+
+We can plot the covariates together using the following code (don't worry too much about understanding what that code is doing at the moment).
+
+```{r plotcovars, fig.width=10, fig.height=7}
+# make a list to hold our plots
+p <- list()
+
+# make a plot for each covariate
+for(covname in c("Depth", "SST", "NPP", "DistToCAS", "EKE")){
+  # make
+  p[[covname]] <- ggplot() +
+    # covariates are plotted as tiles
+    geom_tile(aes_string(x="x", y="y", fill=covname), data=predgrid) + 
+    geom_point(aes(x=x, y=y, size=size),
+               alpha=0.6,
+               data=subset(obs, size>0))+
+    # remove grey background etc
+    theme_minimal() +
+    # remove axis labels and fiddle with the legend
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(),
+          axis.title.y=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(),
+          legend.position="right", legend.key.width=unit(0.005, "npc")) +
+    # make the fill scale be colourblind friendly
+    scale_fill_viridis_c()
+}
+
+# using patchwork to stick the plots together
+p[["Depth"]] + p[["SST"]] + p[["NPP"]] + p[["DistToCAS"]] + p[["EKE"]]  + plot_layout(ncol = 3, nrow=3)
+```
+
+We could improve these plots by adding a map of the USA but this will do for now!
+
+## Pre-model fitting
+
+As we did in the previous exercise, we must remove the observations from the spatial data that we excluded when we fitted the detection function, i.e. those observations at distances greater than the truncation.
+```{r truncate-obs-03}
+obs <- obs[obs$distance <= df_hn$ddf$meta.data$width, ]
+```
+Here we used the value of the truncation stored in the detection function object (`df_hn$ddf`), but we could also use the numeric value (which we can find by checking the model's `summary()`).
+
+Again note that if you want to fit DSMs using detection functions with different truncation distances, then you'll need to reload the `spermwhale.RData` and do the truncation again for that detection function.
+
+## Our new friend `+`
+
+We can build a really big model using `+` to include all the terms that we want in the model. We can check what covariates are available to us by using `head()` to look at the segment table:
+
+```{r seg-table}
+head(segs)
+```
+
+We can then fit a model with the available covariates in it, each as an `s()` term.
+```{r nb-xy-03}
+dsm_nb_xy_ms <- dsm(count~s(x,y, bs="ts") +
+                          s(Depth, bs="ts") +
+                          s(DistToCAS, bs="ts") +
+                          s(SST, bs="ts") +
+                          s(EKE, bs="ts") +
+                          s(NPP, bs="ts"),
+                    df_hn, segs, obs,
+                    family=nb())
+summary(dsm_nb_xy_ms)
+```
+
+Notes:
+
+1. We are using `bs="ts"` to use the shrinkage thin plate regression spline. More technical detail on these smooths can be found on their manual page `?smooth.construct.ts.smooth.spec`.
+2. We have not specified basis complexity (`k`) at the moment. Note that if you want to specify the same complexity for multiple terms, it's often easier to create a variable that can then be provided to `k` (for example, specify `k1 <- 15` and then set `k=k1` in the required `s()` terms).
+
+### Plot
+
+Let's plot the smooths from this model:
+
+```{r plot-nb-xy, fig.cap="Smooths for `dsm_nb_xy_ms`."}
+plot(dsm_nb_xy_ms, pages=1)
+```
+
+Notes:
+
+1. Setting `shade=TRUE` gives prettier confidence bands (by default `shade=FALSE`).
+2. As with `vis.gam()` the response is on the link scale.
+3. `scale=0` puts each plot on a different $y$-axis scale, making it easier to see the effects. Setting `scale=-1` (the default) will put the plots on a common $y$-axis scale (so you can gauge relative importance).
+
+We can also plot the bivariate smooth of `x` and `y` using `vis.gam()`:
+```{r nb-xy-visgam-03, fig.width=4, fig.height=4, fig.cap="Fitted surface with all environmental covariates, and neg-binomial response distribution."}
+vis.gam(dsm_nb_xy_ms, view=c("x","y"), plot.type="contour", too.far=0.1, 
+        main="s(x,y) (link scale)", asp=1)
+```
+
+Compare this plot to the equivalent plot generated in the previous exercise when only `x` and `y` were included in the model.
+
+---
+
+**Comparison to previous `s(x,y)` model**
+
+Refitting the model from the previous exercise:
+
+```{r nb-xy-02}
+dsm_nb_xy <- dsm(count~s(x, y, k=25),
+                 ddf.obj=df_hn, segment.data = segs, 
+                 observation.data=obs,
+                 family=nb())
+```
+
+---
+
+### Select terms
+
+As was covered in the lectures, we can select terms by (approximate) $p$-values and by looking for terms that have EDFs significantly less than 1 (those which have been shrunk).
+
+Remove the terms that are non-significant at this level and re-run the above checks, summaries and plots to see what happens. It's helpful to make notes for yourself as you go. 
+
+---
+
+**Removing terms in the shrunk model**
+
+First let's remove terms in `dsm_nb_xy_ms` via $p$-value first. I'll insist that the $p$-values be significant at the 0.05  level (corresponding to looking for one or more `*` in the `summary` table):
+
+```{r p-value-path1-summ}
+summary(dsm_nb_xy_ms)
+```
+
+First I'll remove `DistToCAS` as a covariate that has a non-significant $p$-value:
+
+```{r p-value-path1-2}
+dsm_nb_xy_ms_p1_2 <- dsm(count~s(x,y, bs="ts") +
+                             s(Depth, bs="ts") +
+                             #s(DistToCAS, bs="ts") +
+                             s(SST, bs="ts") +
+                             s(EKE, bs="ts") +
+                             s(NPP, bs="ts"),
+                      df_hn, segs, obs,
+                      family=nb())
+summary(dsm_nb_xy_ms_p1_2)
+```
+
+Now removing `SST`:
+
+```{r p-value-path1-3}
+dsm_nb_xy_ms_p1_3 <- dsm(count~s(x,y, bs="ts") +
+                             s(Depth, bs="ts") +
+                             #s(DistToCAS, bs="ts") +
+                             #s(SST, bs="ts") +
+                             s(EKE, bs="ts") +
+                             s(NPP, bs="ts"),
+                      df_hn, segs, obs,
+                      family=nb())
+summary(dsm_nb_xy_ms_p1_3)
+```
+
+Finally `NPP`:
+
+```{r p-value-path1-4}
+dsm_nb_xy_ms_p1_4 <- dsm(count~s(x,y, bs="ts") +
+                             s(Depth, bs="ts") +
+                             #s(DistToCAS, bs="ts") +
+                             #s(SST, bs="ts") +
+                             s(EKE, bs="ts"),# +
+                             #s(NPP, bs="ts"),
+                      df_hn, segs, obs,
+                      family=nb())
+summary(dsm_nb_xy_ms_p1_4)
+```
+
+Now we're done! Note that the EDFs of the other terms don't change as we remove the terms here since we're removing terms that had almost zero EDF, so had very little influence on the model. We'll see below if we remove a more wiggly smooth to begin with, other smooth's EDFs (and shapes) will change when we refit.
+
+We won't see much difference if we removed the terms by EDF sequentially rather than using $p$-values. In that case we would remove `NPP` before `SST` (looking back to the output of `summary(dsm_nb_xy_ms)` above. Trying that, we see again that we should remove `SST` next and end up with the same model.
+
+```{r p-value-path2-1}
+dsm_nb_xy_ms_p1_sstvar <- dsm(count~s(x,y, bs="ts") +
+                              s(Depth, bs="ts") +
+                              #s(DistToCAS, bs="ts") +
+                              s(SST, bs="ts") +
+                              s(EKE, bs="ts"),# +
+                              #s(NPP, bs="ts"),
+                      df_hn, segs, obs,
+                      family=nb())
+summary(dsm_nb_xy_ms_p1_sstvar)
+```
+
+---
+
+
+Decide on a significance level that you'll use to discard terms in the model. It's easiest to either comment out the terms that are to be removed (using `#`) or by copying the code chunk above and pasting it below.
+
+Having removed one smooth and reviewed your model, you may decide you wish to remove another. Repeat the process of removing a term and looking at plots and diagnostics again.
+
+Try doing the same thing but using $p$-values. Are the resulting models different? Why?
+
+Compare these results to the diagram [in the lecture notes](http://workshops.distancesampling.org/online-dsm-2020/slides/dsm3-multiple_smooths-section.html#15). Do your results differ?
+
+---
+
+**Path dependency example**
+
+Let's instead start with a model without `s(x,y)` (these models are sometimes referred to as "habitat models") 
+
+```{r p-value-path3-1}
+dsm_nb_noxy_ms_p1_1 <- dsm(count~s(Depth, bs="ts") +
+                             s(DistToCAS, bs="ts") +
+                             s(SST, bs="ts") +
+                             s(EKE, bs="ts") +
+                             s(NPP, bs="ts"),
+                      df_hn, segs, obs,
+                      family=nb())
+summary(dsm_nb_noxy_ms_p1_1)
+```
+
+We can see in contrast to the models with `s(x,y)` in them we have `NPP` significant and with a much larger EDF. First I'll remove `DistToCAS` as a covariate that has a non-significant $p$-value:
+
+```{r p-value-path3-2}
+dsm_nb_noxy_ms_p1_2 <- dsm(count~s(Depth, bs="ts") +
+                             #s(DistToCAS, bs="ts") +
+                             s(SST, bs="ts") +
+                             s(EKE, bs="ts") +
+                             s(NPP, bs="ts"),
+                      df_hn, segs, obs,
+                      family=nb())
+summary(dsm_nb_noxy_ms_p1_2)
+```
+
+Now removing `SST`:
+
+```{r p-value-path3-3}
+dsm_nb_noxy_ms_p1_3 <- dsm(count~s(Depth, bs="ts") +
+                             #s(DistToCAS, bs="ts") +
+                             #s(SST, bs="ts") +
+                             s(EKE, bs="ts") +
+                             s(NPP, bs="ts"),
+                      df_hn, segs, obs,
+                      family=nb())
+summary(dsm_nb_noxy_ms_p1_3)
+```
+
+Now we're done! As we can see we have a rather different model. Let's keep hold of this for when we look into predictions in the final practical.
+
+As briefly mentioned in the lectures, we know that all of these covariates are related to each other in a non-linear way (so using a correlation coefficient-based cutoff may not reveal this issue).
+
+We can look at the *concurvity*: the degree to which one term in the model can be explained by another (note we're talking about the modelled smooths **not** the raw data here). As an example, we can easily see from the maps above that the covariates we're using vary smoothly in space, so we could model them as a response with space (`s(x,y)`) as a predictor.
+
+The `vis.concurvity` function in the `dsm` package lets us look at this by plotting a measure of concurvity between terms (on a scale from 0 to 1):
+
+```{r concurvity}
+vis.concurvity(dsm_nb_xy_ms)
+```
+
+Darker reads indicate more concurvity, lighter colours less. We read the plot as follows: for a term on the $x$-axis, how much can we use that to explain each of the terms on the $y$-axis. So, for example `s(x,y)` can be used to explain almost all of the other covariate smooths very well, aside from `s(EKE)` (looking up the second column, dark reds). Where as each of the terms is fairly bad at explaining `s(x,y)` (first second row, light oranges). The `para` terms are for any "parametric" (i.e., non-smooth) terms in the model (if we included a factor or linear term for some reason).
+
+We can also see from this plot that NPP and SST are really highly concurve, so we might want to be weary of these. One strategy in this case would be to include only one of them in our "base" models and compare the resulting final models after term selection.
+
+Let's just try that quickly here (I've omitted all of the output here, but commented the ordering of the removal). I'm using the same $p$-value rules as above.
+
+```{r concurvity-nosst}
+dsm_nb_xy_ms_nosst <- dsm(count~s(x,y, bs="ts") +
+                              s(Depth, bs="ts") +
+                              #s(DistToCAS, bs="ts") + # 1
+                              s(EKE, bs="ts"),# +
+                              #s(NPP, bs="ts"), # 2
+                      df_hn, segs, obs,
+                      family=nb())
+summary(dsm_nb_xy_ms_nosst)
+```
+
+Now doing the same removing NPP from the outset:
+
+```{r concurvity-nonpp}
+dsm_nb_xy_ms_nonpp <- dsm(count~s(x,y, bs="ts") +
+                              s(Depth, bs="ts") +
+                              #s(DistToCAS, bs="ts") + # 1
+                              s(EKE, bs="ts"), # + 
+                              #s(SST, bs="ts"), # 2
+                      df_hn, segs, obs,
+                      family=nb())
+summary(dsm_nb_xy_ms_nonpp)
+```
+
+Okay, so no difference, but worth checking! This is probably more of an issue if you have terms that are more wiggly but are not significant in the model.
+
+
+---
+
+
+## Selecting the response distribution
+
+We can see how well a response distribution performs by comparing quantile-quantile plots (q-q plots). The `qq.gam` function can create these plots for you.
+
+```{r qqplot}
+qq.gam(dsm_nb_xy_ms, asp=1, rep=100)
+```
+
+The `rep` argument gives us the grey "envelope" that allows us to determine how far away the points are from the line.
+
+Try this out with your own models, comparing the results between two different response distributions (remember that you can change the response distribution using `family=` in the `dsm()` and our two usual options are `tw()` and `nb()`).
+
+---
+
+**Comparing response distributions**
+
+First let's fit a model using `tw()` as the response, I'll again condense the term selection and comment the ordering of removal, using the same $p$-value rule as above.
+
+```{r tw-select}
+dsm_tw_xy_ms <- dsm(count~s(x,y, bs="ts") +
+                          s(Depth, bs="ts") +
+                          #s(DistToCAS, bs="ts") + # 1
+                          #s(SST, bs="ts") + # 2
+                          s(EKE, bs="ts"),# +
+                          #s(NPP, bs="ts"), # 3
+                    df_hn, segs, obs,
+                    family=tw())
+summary(dsm_tw_xy_ms)
+```
+
+Okay, so we've ended up with a model with the same smooths included. Now let's compare quantile-quantile plots, side-by-side:
+
+```{r qq-side-by-side}
+par(mfrow=c(1,2))
+
+# set the random seed for this, see below for why
+set.seed(1233)
+
+qq.gam(dsm_tw_xy_ms, asp=1, rep=200, main="Tweedie")
+qq.gam(dsm_nb_xy_ms, asp=1, rep=200, main="Negative binomial")
+```
+
+Note that each time you run this code you get different grey bands, as the process that generates the bands uses random sampling. For this reason I'm setting the seed so we are looking at the same picture. I think it's fine to do this for e.g., publication provided, of course, you *don't* fish through multiple seeds looking for an interesting plot!
+
+I think from these I'm inclined to say I prefer the negative binomial, but only slightly. We'll keep both models for comparison later.
+
+Note I'm setting `asp=1` for these plots to ensure that the aspect ratio is set. This makes the plots much easier to read.
+
+---
+
+## Comparing models by AIC
+
+As with the detection functions in practical 1, here is a quick function to generate model results tables with response distribution, smooth terms list and AIC:
+
+```{r summarize-models}
+# similar to yesterday, but let's also add
+# in the edfs
+summarize_dsm2 <- function(model){
+
+  summ <- summary(model)
+
+  
+  dat <- data.frame(response = model$family$family,
+                    AIC      = AIC(model))
+  
+  # take the smooth names
+  smooths <- rownames(summ$s.table)
+  # remove their ending bracket, add a comma
+  smooths <- sub(")", ",", smooths)
+  # paste in their edfs, rounded
+  smooths <- paste(smooths, signif(summ$s.table[,1], 3))
+  # close the bracket again
+  smooths <- paste(smooths, ")", sep="")
+  # paste them all together in a list into dat
+  dat$terms <- paste(smooths, collapse=", ")
+  
+  return(dat)
+}
+```
+
+We can make a list of the models and pass the list to the above function.
+
+---
+
+**Comparing by AIC**
+
+I've modified the function to be a bit more fancy here. I'll also load the models from our simple DSM fitting (the previous practical) for comparison.
+
+```{r load-simple-dsms}
+load("dsms-xy.RData")
+```
+
+```{r apply-summary}
+# add your models to this list!
+model_list <- list(dsm_nb_xy_ms, dsm_tw_xy_ms, dsm_nb_noxy_ms_p1_3, dsm_nb_xy, dsm_tw_xy)
+# use plyr to go from list to data.frame via summarize_dsm
+library(plyr)
+summary_table <- ldply(model_list, summarize_dsm2)
+# make the row names whatever you like
+row.names(summary_table) <- c("`dsm_nb_xy_ms` (p-value select))",
+                              "`dsm_tw_xy_ms` (p-value model select)",
+                              "`dsm_nb_noxy_ms_p1_3` (no xy)",
+                              "`dsm_nb_xy` (xy only)",
+                              "`dsm_tw_xy` (xy only)")
+```
+
+```{r print-table-03, results="asis"}
+# sort that table by AIC
+summary_table <- summary_table[order(summary_table$AIC),]
+# make a delta AIC column
+summary_table$deltaAIC <- round(summary_table$AIC - min(summary_table$AIC), 1)
+# remove the AIC column
+summary_table$AIC <- NULL
+# print it in a nice format
+kable(summary_table, 
+      caption = "Model selection table")
+```
+
+
+---
+
+## Extra credit: estimated abundance as a response
+
+So far we have only looked at models with `count` as the response. Try using a detection function with observation-level covariates and use `abundance.est`, instead of `count`, as the response in the chunk below:
+
+---
+
+**Fitting estimated abundance models**
+
+I'll use the same procedure outlined above, using the `df_hr_ss_size` model that includes sea state and size in a hazard-rate model. I'll do this for both Tweedie and negative binomial responses. Again I'll condense the model fitting code and commmenting as I go
+
+First with negative binomial:
+
+```{r abund-est-nb}
+dsm_nb_xy_ms_ae <- dsm(abundance.est~s(x,y, bs="ts") +
+                          s(Depth, bs="ts") +
+                          #s(DistToCAS, bs="ts") + # 3
+                          #s(SST, bs="ts") + # 1
+                          s(EKE, bs="ts"),# +
+                          #s(NPP, bs="ts"), # 2
+                    df_hr_ss_size, segs, obs,
+                    family=nb())
+summary(dsm_nb_xy_ms_ae)
+```
+
+Note the different path that this model takes!
+
+Then with Tweedie:
+
+```{r abund-est-tw}
+dsm_tw_xy_ms_ae <- dsm(abundance.est~s(x,y, bs="ts") +
+                          s(Depth, bs="ts") +
+                          #s(DistToCAS, bs="ts") + # 1
+                          #s(SST, bs="ts") + # 2
+                          s(EKE, bs="ts"),# +
+                          #s(NPP, bs="ts"), # 3
+                    df_hr_ss_size, segs, obs,
+                    family=tw())
+summary(dsm_tw_xy_ms_ae)
+```
+
+Comparing quantile-quantile plots...
+
+```{r qq-side-by-side-ae}
+par(mfrow=c(1,2))
+
+# set the random seed for this, see below for why
+set.seed(1233)
+
+qq.gam(dsm_tw_xy_ms_ae, asp=1, rep=200, main="Tweedie")
+qq.gam(dsm_nb_xy_ms_ae, asp=1, rep=200, main="Negative binomial")
+```
+
+As above, there's not much in it (maybe less?). I might slightly prefer negative binomial since the points look a bit closer (again comparing the axis scales). We'll save both anyway for comparison.
+
+Comparing AIC:
+
+```{r ae_aic}
+AIC(dsm_nb_xy_ms_ae, dsm_tw_xy_ms_ae)
+```
+
+we see that the negative binomial model is preferred.
+
+
+---
+
+## Saving models
+
+Now save the models that you'd like to use to check later: I recommend saving as many models as you can so you can compare the results later.
+
+```{r save-models-03}
+# add your models here
+save(dsm_nb_xy_ms, dsm_tw_xy_ms, dsm_nb_noxy_ms_p1_3,
+     dsm_nb_xy, dsm_tw_xy, dsm_nb_xy_ms_ae, 
+     dsm_tw_xy_ms_ae,
+     file="dsms.RData")
+```

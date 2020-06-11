@@ -1,7 +1,7 @@
 ---
 title: Spatially explicit models for distance sampling data
 author: David L Miller
-subtitle: "Practical 2: Simple density surface models"
+subtitle: "Practical \"solution\" 2: Simple density surface models"
 date: 8-12 June 2020
 
 ---
