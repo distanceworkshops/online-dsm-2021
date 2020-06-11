@@ -66,7 +66,7 @@ for(covname in c("Depth", "SST", "NPP", "DistToCAS", "EKE")){
 }
 
 # using patchwork to stick the plots together
-p[["Depth"]] + p[["SST"]] + p[["NPP"]] + p[["DistToCAS"]] + p[["EKE"]]  + plot_layout(ncol = 3, nrow=3)
+p[["Depth"]] + p[["SST"]] + p[["NPP"]] + p[["DistToCAS"]] + p[["EKE"]]  + plot_layout(ncol = 3, nrow=2)
 ```
 
 We could improve these plots by adding a map of the USA but this will do for now!
