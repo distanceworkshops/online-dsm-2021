@@ -45,8 +45,8 @@ Session     | Part                                                          | De
 *Wednesday* | [Lecture 3](slides/dsm3-multiple_smooths-section.html)        | Recap/solutions for "Fitting simple DSMs"
             | [Lecture 3 (PDF)](slides/dsm3-multiple_smooths-section.pdf)   | Multiple smooths
             |                                                               | Model selection
-            | Practical 3 ([Rmd](practicals/03-multiple-smooths.Rmd))  Practical 3 ([html](practicals/03-multiple-smooths.html))      | Fitting and selecting more complex models
-            | Practical 3 ([Rmd](practicals/03-multiple-smooths_solution.Rmd))  Practical 3 ([html](practicals/03-multiple-smooths_solution.html))  |
+            | Practical 3 ([Rmd](practicals/03-multiple-smooths.Rmd)) ([html](practicals/03-multiple-smooths.html))      | Fitting and selecting more complex models
+            | Practical 3 solutions ([Rmd](practicals/03-multiple-smooths_solution.Rmd)) ([html](practicals/03-multiple-smooths_solution.html))  |
 *Thursday*  | [Lecture 4](slides/dsm4-model_checking.html)                  | Recap/solutions for "Fitting and selecting more complex models"
             | [Lecture 4 (PDF)](slides/dsm4-model_checking.pdf)             | Model checking
             | [Practical 4 (Rmd)](practicals/04-model-checking.Rmd)         | Checking previous models
