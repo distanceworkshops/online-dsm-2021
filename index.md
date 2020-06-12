@@ -55,8 +55,8 @@ Session     | Part                                                          | De
             | [Lecture 5 (PDF)](slides/dsm5-prediction-variance-advice.pdf) | Making predictions
             |                                                               | Estimating variance
             |                                                               | Practical advice
-            | [Practical 5 (Rmd)](practicals/05-prediction-variance.Rmd)    | Making predictions, variance estimation, maps
-            | [Practical 5 (html)](practicals/05-prediction-variance.html)  |
+            | Practical 5 ([Rmd](practicals/05-prediction-variance.Rmd)) ([html](practicals/05-prediction-variance.html))  | Making predictions, variance estimation, maps
+            | Practical 5 solutions ([Rmd](practicals/05-prediction-variance_solution.Rmd)) ([html](practicals/05-prediction-variance_solution.html)) |
 
 
 All materials here are available (including the sources for the slides) at [this github repository](https://github.com/distanceworkshops/online-dsm-2020).
