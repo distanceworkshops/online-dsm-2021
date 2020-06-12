@@ -1,0 +1,463 @@
+---
+title: Spatially explicit models for distance sampling data
+author: David L Miller
+subtitle: "Practical \"solution\" 5: Prediction and variance"
+date: 8-12 June 2020
+
+---
+
+## Aims
+
+By the end of this practical, you should feel comfortable:
+
+- Making a prediction using the `predict()` function
+- Summing the prediction cells to obtain a total abundance for a given area
+- Plotting a map of predictions
+- Knowing when to use `dsm.var.prop` and when to use `dsm.var.gam`
+- Estimating variance for a given prediction area
+- Estimating variance per-cell for a prediction grid
+- Interpreting the `summary()` output for uncertainty estimates
+- Making maps of the coefficient of variation in R
+
+
+## Loading the packages and data
+
+```{r load-packages}
+library(knitr)
+library(dsm)
+library(ggplot2)
+library(patchwork)
+```
+
+Load our models and data:
+
+```{r load-models}
+load("spermwhale.RData")
+# load models
+load("dsms.RData")
+load("dsms-checked.RData")
+# rename one model
+dsm_nb_xy_ms <- dsm_nb_xy_ms_p1_4
+```
+
+## Prediction data
+
+Our prediction data lives in the `predgrid` object. This data was prepared from various sources and the since some of the covariates were dynamic (SST, NPP and EKE), the dates for these were arbitrarily chosen as 2 June 2004, or Julian date 153.
+
+If you're preparing this data yourself, the [`rerddap` package](https://cran.r-project.org/web/packages/rerddap/) can be used to obtain marine data from NOAA for both segments and predictions.
+
+We can take a look at our data using `head()` to see the first few rows:
+
+```{r inspect-preddata}
+head(predgrid)
+```
+
+As we saw in the slides, the `predict()` function will fill in the variables in the model formula with these values to obtain the predictions at each cell.
+
+For example using the model `dsm_nb_xy_ms`:
+
+```{r makepred1}
+pp <- predict(dsm_nb_xy_ms, predgrid, off.set=predgrid$off.set)
+```
+
+This is just a list of numbers -- the predicted abundance per cell. We can sum these to get the estimated abundance for the study area:
+
+```{r predsum}
+sum(pp, na.rm=TRUE)
+```
+
+We can also plot this to get a spatial representation of the predictions:
+```{r predsp, fig.cap="Predicted surface for abundance estimates with bivariate spatial smooth along with environmental covariates."}
+# assign the predictions to the prediction grid data.frame
+predgrid$Nhat_nb_xy <- pp
+
+# plot!
+p <- ggplot(predgrid) +
+  geom_tile(aes(x=x, y=y, fill=Nhat_nb_xy, width=10*1000, height=10*1000)) +
+  coord_equal() + 
+  # better colour scheme  
+  scale_fill_viridis_c() +
+  # cleaner plot
+  theme_minimal() +
+  # set the label for the fill colour
+  labs(fill="Abundance")
+print(p)
+```
+
+Use the chunks above as a template and make predictions for the other models you saved in the previous exercises. In particular, compare the models with only spatial terms to those with environmental covariates included.
+
+---
+
+**Making predictions**
+
+Let's try making predictions with a few models. Let's compare two count models (negative binomial and Tweedie) an two estimated abundance models (negative binomial and Tweedie).
+
+I'll make the plots then use the `patchwork` package to add together plots and put them together at the end.
+
+First the Tweedie count, with a smooth of space.
+
+```{r makepred-tw}
+predgrid$Nhat_tw_xy <- predict(dsm_tw_xy_ms, predgrid, 
+                               off.set=predgrid$off.set)
+
+# plot
+p_tw_xy <- ggplot(predgrid) +
+  geom_tile(aes(x=x, y=y, fill=Nhat_tw_xy,
+                width=10*1000, height=10*1000)) +
+  coord_equal() + 
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  ggtitle("dsm_tw_xy_ms") +
+  labs(fill="Abundance")
+```
+
+Now make a plot for the negative binomial habitat count model:
+
+```{r makepred-nb}
+predgrid$Nhat_nb_noxy <- predict(dsm_nb_noxy_ms_refit,
+                                 predgrid, 
+                                 off.set=predgrid$off.set)
+
+# plot
+p_nb_noxy <- ggplot(predgrid) +
+  geom_tile(aes(x=x, y=y, fill=Nhat_nb_noxy,
+                width=10*1000, height=10*1000)) +
+  coord_equal() + 
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  ggtitle("dsm_nb_noxy_ms_refit") +
+  labs(fill="Abundance")
+```
+
+Now the estimated abundance, with negative binomial response:
+
+```{r makepred-nb-ae}
+predgrid$Nhat_nb_ae <- predict(dsm_nb_xy_ms_ae, predgrid, 
+                               off.set=predgrid$off.set)
+
+# plot
+p_nb_ae <- ggplot(predgrid) +
+  geom_tile(aes(x=x, y=y, fill=Nhat_nb_ae,
+                width=10*1000, height=10*1000)) +
+  coord_equal() + 
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  ggtitle("dsm_nb_xy_ms_ae") +
+  labs(fill="Abundance")
+```
+
+Finally estimated abundance, with Tweedie response:
+
+```{r makepred-tw-ae}
+predgrid$Nhat_tw_ae <- predict(dsm_tw_xy_ms_ae, predgrid, 
+                               off.set=predgrid$off.set)
+
+# plot
+p_tw_ae <- ggplot(predgrid) +
+  geom_tile(aes(x=x, y=y, fill=Nhat_tw_ae,
+                width=10*1000, height=10*1000)) +
+  coord_equal() + 
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  ggtitle("dsm_tw_xy_ms_ae") +
+  labs(fill="Abundance")
+```
+
+Now plotting these all together:
+
+```{r makeplot, fig.height=10, fig.width=10}
+(p_tw_xy + p_nb_noxy)/(p_tw_ae + p_nb_ae)
+```
+
+We can see a similar pattern generally in all the plots with high values at the shelf edge, though we can see that `dsm_nb_noxy_ms_refit` has much more fine detail in it than the other models.
+
+Now make some abundance estimates:
+
+```{r abundance-ests}
+sum(predgrid$Nhat_tw_xy)
+sum(predgrid$Nhat_nb_noxy)
+sum(predgrid$Nhat_tw_ae)
+sum(predgrid$Nhat_nb_ae)
+```
+
+We do see a big difference here between the estimated abundance models and the count models. Bear in mind that the count models were both fitted just using the half-normal detection function.
+
+```{r hab-refit-df}
+load("df-models.RData")
+
+# need to build the binned Beaufort covariate as was
+# in the detection function
+segs$BeaufortCut <- cut(segs$Beaufort, seq(0, 5, by=1),
+                        include.lowest=TRUE,
+                        ordered.result=TRUE)
+
+# do a quick model selection, based off previous results
+dsm_nb_xy_ms_refit <- dsm(count~s(x,y, bs="ts", k=60) +
+                             s(Depth, bs="ts", k=20) +
+                             #s(DistToCAS, bs="ts") + # 1
+                             #s(SST, bs="ts") + # 2
+                             s(EKE, bs="ts", k=20),# +
+                             #s(NPP, bs="ts"), # 3
+                      df_hr_beau, segs, obs,
+                      family=nb())
+summary(dsm_nb_xy_ms_refit)
+```
+
+Plotting that resulting model:
+
+```{r makepred-nb-xy}
+predgrid$Nhat_nb_xy <- predict(dsm_nb_xy_ms_refit,
+                               predgrid, 
+                               off.set=predgrid$off.set)
+
+# plot
+p_nb_xy <- ggplot(predgrid) +
+  geom_tile(aes(x=x, y=y, fill=Nhat_nb_xy,
+                width=10*1000, height=10*1000)) +
+  coord_equal() + 
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  labs(fill="Abundance")
+print(p_nb_xy)
+```
+
+Now we get something more like the estimated abundance models, so we can see that including sea state can have a really big effect!
+
+```{r new-abund-xy}
+sum(predgrid$Nhat_nb_xy)
+```
+
+And let's do the same thing for the Tweedie:
+
+```{r hab-refit-df-tw}
+# do a quick model selection, based off previous results
+dsm_tw_xy_ms_refit <- dsm(count~s(x,y, bs="ts", k=60) +
+                             s(Depth, bs="ts", k=20) +
+                             #s(DistToCAS, bs="ts", k=20) + # 1
+                             s(SST, bs="ts", k=20),# + 
+                             #s(EKE, bs="ts", k=20),# +
+                             #s(NPP, bs="ts", k=20), # 2
+                      df_hr_beau, segs, obs,
+                      family=tw())
+summary(dsm_tw_xy_ms_refit)
+```
+
+So now with SST in the model, let's see what that looks like:
+
+```{r makepred-tw-refit}
+predgrid$Nhat_tw_xy <- predict(dsm_tw_xy_ms_refit,
+                               predgrid, 
+                               off.set=predgrid$off.set)
+
+# plot
+p_tw_xy <- ggplot(predgrid) +
+  geom_tile(aes(x=x, y=y, fill=Nhat_tw_xy,
+                width=10*1000, height=10*1000)) +
+  coord_equal() + 
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  labs(fill="Abundance")
+print(p_tw_xy)
+```
+
+However this doesn't change the predicted abundance.
+
+```{r new-abund}
+sum(predgrid$Nhat_tw_xy)
+```
+
+However, let's remember that this was not our favoured model previously and remains so: the negative binomial model's AIC is considerably better
+
+```{r tw-nb-AIC}
+AIC(dsm_nb_xy_ms_refit, dsm_tw_xy_ms_refit)
+```
+
+And the quantile-quantile plot shows the negative binomial model has a better fit:
+
+```{r tw-nb-qq}
+par(mfrow=c(1,2))
+qq.gam(dsm_nb_xy_ms_refit, rep=200, main="negative binomial")
+qq.gam(dsm_tw_xy_ms_refit, rep=200, main="negative binomial")
+```
+
+So we won't pursue this model (`dsm_tw_xy_ms_refit`) further.
+
+---
+
+## Variance estimation
+
+Depending on the covariates in the model, we can use either `dsm.var.prop` or `dsm.var.gam`. Remember:
+- `dsm.var.gam`
+  - assumes spatial model and detection function are independent
+- `dsm.var.prop`
+  - propagates uncertainty from detection function to spatial model
+  - only works for `count` models
+  - covariates can only vary at segment level
+
+If there are no covariates in the detection function, use `dsm.var.gam` since there's no covariance between the detection function and the spatial model.
+  
+`dsm_nb_xy_ms` doesn't include any covariates at the observer level in the detection function, so we can use `dsm.var.gam` to estimate the uncertainty.
+
+```{r varest}
+# now estimate variance
+var_nb_xy_ms <- dsm.var.gam(dsm_nb_xy_ms, predgrid, 
+                             off.set=predgrid$off.set)
+```
+To summarise the results of this variance estimate:
+```{r varest-summary}
+summary(var_nb_xy_ms)
+```
+
+Try this out for some of the other models you've saved.
+
+---
+
+**Variance estimation**
+
+We can use either the delta method (`dsm.var.gam`) or variance propagation (`dsm.var.prop`) with our count model:
+
+```{r var-count}
+dsm_nb_vargam <- dsm.var.gam(dsm_nb_xy_ms_refit, predgrid,
+                             off.set=predgrid$off.set)
+summary(dsm_nb_vargam)
+dsm_nb_varprop <- dsm.var.prop(dsm_nb_xy_ms_refit, predgrid,
+                             off.set=predgrid$off.set)
+summary(dsm_nb_varprop)
+```
+
+Looking at these summaries we see that we actually get a reduction in the CV for our predictions! This is due to negative covariance between the spatial and detection parts of the model.
+
+The table at the top of the `dsm.var.prop` output lets us check whether anything went wrong during the variance estimation. Values in the `Refitted.model` column should be no more than twice `Fitted.model.se` away from their corresponding `Fitted.model` values.
+
+For the estimated abundance models, we must use `dsm.var.gam`:
+
+```{r var-count-ae}
+dsm_nb_vargam_ae <- dsm.var.gam(dsm_nb_xy_ms_ae, predgrid,
+                             off.set=predgrid$off.set)
+summary(dsm_nb_vargam_ae)
+dsm_tw_vargam_ae <- dsm.var.gam(dsm_tw_xy_ms_ae, predgrid,
+                             off.set=predgrid$off.set)
+summary(dsm_tw_vargam_ae)
+```
+
+Again the Tweedie model here is just for example, we didn't prefer this model based on AIC or quantile-quantile plots.
+
+---
+
+## Plotting
+
+We can plot a map of the coefficient of variation, but we first need to estimate the variance per prediction cell, rather than over the whole area. 
+
+```{r per-cell-var}
+# use the split function to make each row of the predictiond data.frame into
+# an element of a list
+predgrid$height <- predgrid$width <- 10*1000
+predgrid_var_split <- split(predgrid, 1:nrow(predgrid))
+var_split_nb_xy_ms <- dsm.var.gam(dsm_nb_xy_ms, predgrid_var_split, 
+                                   off.set=predgrid$off.set)
+```
+Now we have the per-cell coefficients of variation, we assign that to a column of the prediction grid data and plot it as usual:
+
+```{r varest-map-obs, fig.cap="Uncertainty (CV) in prediction surface from bivariate spatial smooth with environmental covariates.  Sightings overlaid."}
+cv <- sqrt(var_split_nb_xy_ms$pred.var)/unlist(var_split_nb_xy_ms$pred)
+predgrid$CV <- cv
+p <- ggplot(predgrid) +
+  geom_tile(aes(x=x, y=y, fill=CV, width=10*1000, height=10*1000)) +
+  scale_fill_viridis_c() +
+  coord_equal() +
+  geom_point(aes(x=x,y=y, size=count), alpha=0.4,
+             data=dsm_nb_xy_ms$data[dsm_nb_xy_ms$data$count>0,]) +
+  theme_minimal()
+print(p)
+```
+
+Note that here we overplot the segments where sperm whales were observed (and scale the size of the point according to the number observed), using `geom_point()`. The `alpha=` argument makes the points semi-transparent.
+
+Try this with the other models you fitted and see what the differences are between the maps of coefficient of variation.
+
+Try plotting the effort over a CV plot, using the data in the model.
+
+---
+
+**Plotting uncertainty**
+
+Let's make plots to compare the maps using the delta method and variance propagation for the count model `dsm_nb_xy_ms_refit`:
+
+```{r var-count-plot}
+# vargam plot
+dsm_nb_vargam_plot <- dsm.var.gam(dsm_nb_xy_ms_refit, predgrid_var_split,
+                             off.set=predgrid$off.set)
+# can use plot=FALSE to get the ggplot object that we can modify
+pl_vg <- plot(dsm_nb_vargam_plot, plot=FALSE, observations=FALSE)
+# modify plot
+pl_vg <- pl_vg + 
+  geom_point(aes(x=x, y=y), data=dsm_nb_noxy_ms_refit$data,
+             colour="lightgrey", alpha=.5, size=0.2) +
+  theme(legend.position="bottom") +
+  scale_fill_viridis_c()
+
+# varprop plot
+dsm_nb_varprop_plot <- dsm.var.prop(dsm_nb_xy_ms_refit, predgrid_var_split,
+                             off.set=predgrid$off.set)
+pl_vp <- plot(dsm_nb_varprop_plot, plot=FALSE, observations=FALSE)
+pl_vp <- pl_vp +
+  geom_point(aes(x=x, y=y), data=dsm_nb_noxy_ms_refit$data,
+             colour="lightgrey", alpha=.5, size=0.2) +
+  theme(legend.position="bottom") +
+  scale_fill_viridis_c()
+```
+
+Putting that together in a plot:
+
+```{r plot-vg-vp}
+pl_vg + pl_vp
+```
+
+We can see some differences here in the spatial pattern of the ucnertainty as well as the overall size we see in the `summary` difference above.
+
+---
+
+---
+
+**One more thing...**
+
+What about using an interaction of EKE and Depth? I'll try this just for the count model with negative binomial response.
+
+We can construct this using a *tensor product* which takes two (or more) univariate smooths and create a 2 (or more) dimensional smooth. We can set `k` for each dimension (we can even set different basis functions in each direction) but note that it's the term will use the product of these `k`s number of parameters (`k=c(10,10)` leads to a 100 parameter term!). The tensor product includes the univariate terms (it's a full interaction), so we need to remove them from the model:
+
+```{r te}
+dsm_nb_te <- dsm(count~s(x,y, bs="ts", k=30) +
+                       #s(DistToCAS, bs="ts") + # 1
+                       #s(SST, bs="ts") + # 3
+                       te(EKE, Depth, bs="ts", k=c(10, 10)),# +
+                       #s(NPP, bs="ts"), # 2
+                      df_hr_beau, segs, obs,
+                      family=nb())
+summary(dsm_nb_te)
+```
+
+We can plot this just like any other model:
+
+```{r plot-te}
+plot(dsm_nb_te, scheme=2, shade=TRUE)
+```
+
+A useful test here of whether we need the tensor would be using the `ti` form of the tensor. This allows us to look at the parts of the interaction on their own. We can write a tensor product `te(x, y)` as `ti(x) + ti(y) + ti(x, y)`, so we get the main effects and interactions separately in the model `summary` table. Doing that:
+
+```{r ti}
+dsm_nb_ti <- dsm(count~s(x,y, bs="ts", k=30) +
+                       #s(DistToCAS, bs="ts") +
+                       #s(SST, bs="ts") + 
+                       ti(EKE, bs="ts", k=10) +
+                       ti(Depth, bs="ts", k=10) +
+                       ti(EKE, Depth, bs="ts", k=c(10, 10)),# +
+                       #s(NPP, bs="ts"),
+                      df_hr_beau, segs, obs,
+                      family=nb())
+summary(dsm_nb_ti)
+```
+
+We can see that the interaction term `ti(EKE, Depth)` has a very small EDF and isn't significant at the 0.05 level. So I think this one isn't a go-er unfortunately, even if the biological/oceanographic story is more compelling.
+
+---
+
