@@ -49,8 +49,8 @@ Session     | Part                                                          | De
             | Practical 3 solutions ([Rmd](practicals/03-multiple-smooths_solution.Rmd)) ([html](practicals/03-multiple-smooths_solution.html))  |
 *Thursday*  | [Lecture 4](slides/dsm4-model_checking.html)                  | Recap/solutions for "Fitting and selecting more complex models"
             | [Lecture 4 (PDF)](slides/dsm4-model_checking.pdf)             | Model checking
-            | [Practical 4 (Rmd)](practicals/04-model-checking.Rmd)         | Checking previous models
-            | [Practical 4 (html)](practicals/04-model-checking.html)       |
+            | Practical 4 ([Rmd](practicals/04-model-checking.Rmd)) ([html](practicals/04-model-checking.html))       | Checking previous models
+            | Practical 4 solutions ([Rmd](practicals/04-model-checking_solution.Rmd)) ([html](practicals/04-model-checking_solution.html))       |
 *Friday*    | [Lecture 5](slides/dsm5-prediction-variance-advice.html)      | Recap/solutions for "Checking previous models"
             | [Lecture 5 (PDF)](slides/dsm5-prediction-variance-advice.pdf) | Making predictions
             |                                                               | Estimating variance
