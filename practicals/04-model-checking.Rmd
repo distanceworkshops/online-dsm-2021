@@ -233,6 +233,6 @@ Now save the models that you'd like to use to predict with later (that have good
 
 ```{r save-models-03}
 # add your models here
-save(dsm_nb_xy_ms,
-     file="dsms-checked.RData")
+#save(dsm_nb_xy_ms,
+#     file="dsms-checked.RData")
 ```
