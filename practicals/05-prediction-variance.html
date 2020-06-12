@@ -520,13 +520,7 @@ Uncertainty (CV) in prediction surface from bivariate spatial smooth with enviro
 </div>
 <p>Note that here we overplot the segments where sperm whales were observed (and scale the size of the point according to the number observed), using <code>geom_point()</code>. The <code>alpha=</code> argument makes the points semi-transparent.</p>
 <p>Try this with the other models you fitted and see what the differences are between the maps of coefficient of variation.</p>
-</div>
-<div id="extra-credit" class="section level2">
-<h2>Extra credit</h2>
-<ul>
-<li>Try plotting the effort over a CV plot, using the data in the model.</li>
-<li>The functions <code>dsm.var.prop</code> and <code>dsm.var.gam</code> can accept arbitrary splits in the data, not just whole areas or cells. Make a <code>list</code> with two elements: one a <code>data.frame</code> of all the cells with <span class="math inline">\(y&gt;0\)</span> and one with <span class="math inline">\(y\leq 0\)</span>. Estimate the variance for these regions. Note that you’ll need to sum the offsets for each area to get the correct value to supply to <code>off.set=...</code>.</li>
-</ul>
+<p>Try plotting the effort over a CV plot, using the data in the model.</p>
 </div>
 
 
