@@ -87,7 +87,7 @@ Check to see if any of your models need this treatment.
 
 ---
 
-**Checking `k` size
+**Checking `k` size**
 
 I saved the following models last time: `dsm_nb_xy_ms_p1_4`, `dsm_tw_xy_ms`, `dsm_nb_noxy_ms_p1_3`, `dsm_nb_xy`, `dsm_tw_xy`, `dsm_nb_xy_ms_ae` and `dsm_tw_xy_ms_ae`.
 

@@ -1,7 +1,7 @@
 ---
 title: Spatially explicit models for distance sampling data
 author: David L Miller
-subtitle: "Practical 4: Prediction and variance"
+subtitle: "Practical 5: Prediction and variance"
 date: 8-12 June 2020
 
 ---
@@ -32,13 +32,16 @@ Load our models and data:
 
 ```{r load-models}
 load("spermwhale.RData")
-# models with all covariates
+# load models
 load("dsms.RData")
+load("dsms-checked.RData")
+# rename one model
+dsm_nb_xy_ms <- dsm_nb_xy_ms_p1_4
 ```
 
 ## Prediction data
 
-Our prediction data lives in the `predgrid` object. This data was prepared from various sources and the since some of the covariates were dynamic (SST, NPP and EKE), the dates for these were arbitrarily choosen as 2 June 2004, or Julian date 153.
+Our prediction data lives in the `predgrid` object. This data was prepared from various sources and the since some of the covariates were dynamic (SST, NPP and EKE), the dates for these were arbitrarily chosen as 2 June 2004, or Julian date 153.
 
 If you're preparing this data yourself, the [`rerddap` package](https://cran.r-project.org/web/packages/rerddap/) can be used to obtain marine data from NOAA for both segments and predictions.
 
