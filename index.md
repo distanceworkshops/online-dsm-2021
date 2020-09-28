@@ -82,7 +82,7 @@ Note that this might take a while depending on your internet connection speed.
 
 ## Additional resources
 
-- [`dsm` data formatting example](http://workshops.distancesampling.org/online-dsm-2020/data-format/dsm-data-formatting.html) gives an example of getting your data into the right format for `dsm`
+- [`dsm` data formatting example](https://examples.distancesampling.org/dsm-data-formatting/dsm-data-formatting.html) gives an example of getting your data into the right format for `dsm`
 - [Reading list for this course](reading_list.html). List of useful papers, reports, websites and books to follow-up on.
 - ["An Introduction to R" online book from Aberdeen University](https://alexd106.github.io/Rbook/)
 - [Distance sampling online](https://workshops.distancesampling.org/online-course/) free video lectures on distance sampling from CREEM
