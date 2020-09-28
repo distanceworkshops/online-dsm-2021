@@ -139,7 +139,7 @@ head(predgrid)
 ---
 # Predictors
 
-```{r preddata-plot, out.height=800}
+```{r preddata-plot, out.height=800, dpi=200}
 load("geosave.RData")
 p<-list()
 for(covname in c("Depth", "SST", "NPP", "DistToCAS", "EKE")){

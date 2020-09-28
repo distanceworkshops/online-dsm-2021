@@ -4,7 +4,7 @@
     <title>Lecture 2: Generalized Additive Models</title>
     <meta charset="utf-8" />
     <meta name="author" content="David L Miller (@millerdl)" />
-    <script src="libs/header-attrs-2.1/header-attrs.js"></script>
+    <script src="libs/header-attrs-2.3/header-attrs.js"></script>
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
     <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
     <link rel="stylesheet" href="custom.css" type="text/css" />
@@ -407,20 +407,7 @@ dsm_xyb_tw &lt;- dsm(count ~ s(x, y),
 ```
 
 ---
-# Plotting... erm...
-
-.pull-left[
-![](dsm2-gams_files/figure-html/plotsmooth-xy-biv1-1.svg)&lt;!-- --&gt;
-]
-.pull-right[
-
-
-```r
-plot(dsm_xyb_tw)
-```
-]
----
-# Let's try something different
+# Plotting
 
 .pull-left[
 
@@ -428,8 +415,10 @@ plot(dsm_xyb_tw)
 plot(dsm_xyb_tw, select=1,
      scheme=2, asp=1)
 ```
-- Still on link scale
-- `too.far` excludes points far from data
+- On link scale
+- `scheme=2` makes heatmap
+- (set `too.far` to exclude points far from data)
+
 ]
 .pull-right[
 ![](dsm2-gams_files/figure-html/twodee-1.svg)&lt;!-- --&gt;

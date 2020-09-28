@@ -172,27 +172,26 @@ legend(x="topright", legend=p, fill=rr, inset=0.05)
 ```{r negbin}
 par(ps=15)
 
-y<-seq(1,12,by=1)
-disps <- seq(0.01, 1, len=5)
+y<-seq(0, 12, by=1)
+disps <- c(0.1, 0.2, 0.5, 0.75)
 
 fymat <- matrix(NA, length(y), length(disps))
 
 i <- 1
 for(disp in disps){
-  fymat[,i] <- dnbinom(y, size=disp, mu=5)
+  fymat[,i] <- dnbinom(y, size=disp, mu=3)
   i <- i+1
 }
 
-plot(range(y), range(fymat), type="n", ylab="Density", xlab="x", cex.lab=1.5,
-     main="")
 
-rr <- brewer.pal(8,"Dark2")
+par(mfrow=c(2,2))
 
 for(i in 1:ncol(fymat)){
-  lines(y, fymat[,i], type="l", col=rr[i], lwd=2)
-}
+  plot(range(y), range(fymat), type="n", ylab="Density",
+       xlab="x", cex.lab=1.5, main=disps[i])
 
-legend(x="topright", legend=disps, fill=rr, inset=0.05)
+  segments(x0=y, x1=y, y0=0, fymat[,i], type="l", lwd=2)
+}
 
 ```
 ]
@@ -498,30 +497,17 @@ summary(dsm_xyb_tw)
 ```
 
 ---
-# Plotting... erm...
-
-.pull-left[
-```{r plotsmooth-xy-biv1, eval=TRUE}
-par(cex.axis=2, lwd=2, cex.lab=2, cex=2)
-plot(dsm_xyb_tw, asp=1, lwd=3)
-```
-]
-.pull-right[
-
-```{r plotsmooth-xy-biv2, eval=FALSE, echo=TRUE}
-plot(dsm_xyb_tw)
-```
-]
----
-# Let's try something different
+# Plotting
 
 .pull-left[
 ```{r twodee-p, echo=TRUE, eval=FALSE}
 plot(dsm_xyb_tw, select=1,
      scheme=2, asp=1)
 ```
-- Still on link scale
-- `too.far` excludes points far from data
+- On link scale
+- `scheme=2` makes heatmap
+- (set `too.far` to exclude points far from data)
+
 ]
 .pull-right[
 ```{r twodee, echo=FALSE}

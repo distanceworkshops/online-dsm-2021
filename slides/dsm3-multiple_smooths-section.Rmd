@@ -80,7 +80,7 @@ class: inverse, middle, center
 ---
 # Sperm whale covariates
 
-```{r plotall, out.height=800}
+```{r plotall, out.height=800, dpi=300}
 load("geosave.RData")
 p<-list()
 for(covname in c("Depth", "SST", "NPP", "DistToCAS", "EKE")){
@@ -314,7 +314,7 @@ summary(dsm_ts_all)
 ```{r edf-comp, result="asis"}
 aa <- cbind(summary(dsm_all)$edf,
             summary(dsm_ts_all)$edf)
-rownames(aa) <- rownames(summary(dsm_sel)$s.table)
+rownames(aa) <- rownames(summary(dsm_all)$s.table)
 colnames(aa) <- c("tp", "ts")
 kable(round(aa, 4), digits=4, format="html")
 ```
@@ -347,7 +347,9 @@ class: inverse, middle, center
 # Akaike's "An Information Criterion"
 
 - As for many other models, we can get an AIC from our model
-- Comparison of AIC fine (but not the end of the story)
+- Comparison of AIC fine **but**:
+  - can't compare Tweedie (continuous) and negative binomial (discrete) distributions!
+  - (*within* distribution is fine)
 
 ```{r aic, echo=TRUE}
 AIC(dsm_all)

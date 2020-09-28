@@ -4,7 +4,7 @@
     <title>Multivariate smoothing, model selection</title>
     <meta charset="utf-8" />
     <meta name="author" content="David L Miller (@millerdl)" />
-    <script src="libs/header-attrs-2.1/header-attrs.js"></script>
+    <script src="libs/header-attrs-2.3/header-attrs.js"></script>
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
     <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
     <link rel="stylesheet" href="custom.css" type="text/css" />
@@ -142,13 +142,13 @@ Two popular approaches (using `\(p\)`-values)
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Approximate significance of smooth terms:
-##                edf Ref.df     F p-value    
-## s(x,y)       5.225  7.153 1.233  0.2920    
-## s(Depth)     3.568  4.439 6.641 1.6e-05 ***
-## s(DistToCAS) 1.000  1.000 1.504  0.2204    
-## s(SST)       5.927  6.986 2.068  0.0407 *  
-## s(EKE)       1.763  2.225 2.579  0.0695 .  
-## s(NPP)       2.393  3.068 0.856  0.4678    
+##                edf Ref.df     F  p-value    
+## s(x,y)       5.225  7.153 1.233   0.2920    
+## s(Depth)     3.568  4.439 6.641 1.82e-05 ***
+## s(DistToCAS) 1.000  1.000 1.504   0.2204    
+## s(SST)       5.927  6.986 2.068   0.0407 *  
+## s(EKE)       1.763  2.225 2.579   0.0693 .  
+## s(NPP)       2.393  3.068 0.856   0.4678    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -241,12 +241,12 @@ dsm_ts_all &lt;- dsm(count~s(x, y, bs="ts") +
 ## 
 ## Approximate significance of smooth terms:
 ##                    edf Ref.df     F  p-value    
-## s(x,y)       1.8875209     29 0.705 3.56e-06 ***
-## s(Depth)     3.6794182      9 4.811 2.15e-10 ***
+## s(x,y)       1.8875209     29 0.705 4.33e-06 ***
+## s(Depth)     3.6794182      9 4.811  &lt; 2e-16 ***
 ## s(DistToCAS) 0.0000934      9 0.000   0.6797    
 ## s(SST)       0.3826654      9 0.063   0.2160    
 ## s(EKE)       0.8196256      9 0.499   0.0178 *  
-## s(NPP)       0.0003570      9 0.000   0.8359    
+## s(NPP)       0.0003570      9 0.000   0.8372    
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -327,7 +327,9 @@ class: inverse, middle, center
 # Akaike's "An Information Criterion"
 
 - As for many other models, we can get an AIC from our model
-- Comparison of AIC fine (but not the end of the story)
+- Comparison of AIC fine **but**:
+  - can't compare Tweedie (continuous) and negative binomial (discrete) distributions!
+  - (*within* distribution is fine)
 
 
 ```r
