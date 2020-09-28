@@ -2,7 +2,6 @@
 title: Spatially explicit models for distance sampling data
 author: David L Miller
 subtitle: "Practical \"solution\" 5: Prediction and variance"
-date: 8-12 June 2020
 
 ---
 
@@ -266,13 +265,7 @@ However this doesn't change the predicted abundance.
 sum(predgrid$Nhat_tw_xy)
 ```
 
-However, let's remember that this was not our favoured model previously and remains so: the negative binomial model's AIC is considerably better
-
-```{r tw-nb-AIC}
-AIC(dsm_nb_xy_ms_refit, dsm_tw_xy_ms_refit)
-```
-
-And the quantile-quantile plot shows the negative binomial model has a better fit:
+However, let's remember that this was not our favoured model previously and remains so: the quantile-quantile plot shows the negative binomial model has a better fit:
 
 ```{r tw-nb-qq}
 par(mfrow=c(1,2))
@@ -340,7 +333,7 @@ dsm_tw_vargam_ae <- dsm.var.gam(dsm_tw_xy_ms_ae, predgrid,
 summary(dsm_tw_vargam_ae)
 ```
 
-Again the Tweedie model here is just for example, we didn't prefer this model based on AIC or quantile-quantile plots.
+Again the Tweedie model here is just for example, we didn't prefer this model based on quantile-quantile plots.
 
 ---
 

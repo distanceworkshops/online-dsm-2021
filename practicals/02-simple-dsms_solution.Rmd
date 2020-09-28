@@ -2,7 +2,6 @@
 title: Spatially explicit models for distance sampling data
 author: David L Miller
 subtitle: "Practical \"solution\" 2: Simple density surface models"
-date: 8-12 June 2020
 
 ---
 
@@ -365,7 +364,7 @@ summary_table <- ldply(model_list, summarize_dsm)
 row.names(summary_table) <- c("dsm_nb_xy", "dsm_nb_x_y", "dsm_tw_xy", "dsm_tw_x_y")
 ```
 
-We can then again use the `kable` function to make a table, in this case sorting by AIC
+We can then again use the `kable` function to make a table, in this case sorting by AIC (though note that we can't compare between Tweedie and negative binomial models as the former is a continuous distribution and the latter isn't):
 
 ```{r sort-table}
 summary_table <- summary_table[order(summary_table$AIC),]
@@ -377,7 +376,9 @@ Then the table:
 kable(summary_table)
 ```
 
-We'll discuss how to decide between the models in the lectures!
+In each case the `s(x,y)` model is preferred.
+
+We'll discuss how to decide between models in more detail in the lectures!
 
 ---
 

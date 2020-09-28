@@ -2,7 +2,6 @@
 title: Spatially explicit models for distance sampling data
 author: David L Miller
 subtitle: "Practical \"solution\" 3: Multiple smooths and model selection"
-date: 8-12 June 2020
 
 ---
 
@@ -438,6 +437,7 @@ kable(summary_table,
       caption = "Model selection table")
 ```
 
+Again worth noting here that we can't compare between the distributions using AIC this table only **within** distributions.
 
 ---
 
@@ -449,7 +449,7 @@ So far we have only looked at models with `count` as the response. Try using a d
 
 **Fitting estimated abundance models**
 
-I'll use the same procedure outlined above, using the `df_hr_ss_size` model that includes sea state and size in a hazard-rate model. I'll do this for both Tweedie and negative binomial responses. Again I'll condense the model fitting code and commmenting as I go
+I'll use the same procedure outlined above, using the `df_hr_ss_size` model that includes sea state and size in a hazard-rate model. I'll do this for both Tweedie and negative binomial responses. Again I'll condense the model fitting code and commenting as I go
 
 First with negative binomial:
 
@@ -494,14 +494,6 @@ qq.gam(dsm_nb_xy_ms_ae, asp=1, rep=200, main="Negative binomial")
 ```
 
 As above, there's not much in it (maybe less?). I might slightly prefer negative binomial since the points look a bit closer (again comparing the axis scales). We'll save both anyway for comparison.
-
-Comparing AIC:
-
-```{r ae_aic}
-AIC(dsm_nb_xy_ms_ae, dsm_tw_xy_ms_ae)
-```
-
-we see that the negative binomial model is preferred.
 
 
 ---

@@ -2,7 +2,6 @@
 title: Spatially explicit models for distance sampling data
 author: David L Miller
 subtitle: "Practical \"solution\" 1: Detection function fitting"
-date: 8-12 June 2020
 
 ---
 
