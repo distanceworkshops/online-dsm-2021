@@ -104,6 +104,7 @@ polygon(x=c(0,1,1,0,0), y=c(0,0,1,1,0))
 ```
 
 ---
+
 # Plot sampling
 
 ```{r, plotsampling, echo=FALSE}
@@ -138,6 +139,7 @@ for(i in 1:10){
 - Estimated abundance $\hat{N}=\hat{D}A=$ `r  n/(10*0.1^2)`
 
 ---
+
 # Strip transect
 
 ```{r strip}
@@ -213,7 +215,7 @@ lt <- list(x=c(-0.0125, -0.0125, 0.0125, 0.0125, -0.0125),  y=c(0, 1, 1, 0, 0))
 sigma <- 0.01
 # storage for detected distances
 detected_distances <- c()
-for(i in 1:4){
+for(i in 1:5){
   # calculate next strip location
   lt$x <- lt$x+0.15
   # plot the line transect
@@ -265,14 +267,15 @@ axis(2, at=c(0, g0/2, g0), labels=c(0,0.5,1))
 ## calculate Nhat
 # calculate mu, since we know sigma and set w=0.02
 # calculate p = mu/w
+mu <- 1/g0
 p <- mu/0.02
 n<-length(detected_distances)
-covered <- 2*0.02*5
+covered <- 2*0.025*5
 Nhat.lt <- A*n/(covered*p)
 ```
 
-- Surveyed 5 lines (each $1*0.025$ units)
-  - Total covered area $a=5*1*0.02 =$ `r covered`
+- Surveyed 5 lines (each area $1*0.025$)
+  - Total covered area $a=5*1*0.025 =$ `r covered`
 - Probability of detection $\hat{p} =$ `r round(p,4)`
 - Saw $n=$ `r n` animals
 - Inflate to $n/\hat{p}=$ `r round(n/p, 3)`
@@ -295,7 +298,7 @@ Nhat.lt <- A*n/(covered*p)
 ---
 # What are detection functions?
 
-- Model $\mathbb{P}\left( \text{detection } \vert \text{ animal at distance } x \right)$
+- $\mathbb{P}\left( \text{detection } \vert \text{ animal at distance } x \right)$
 - "Integrate out distance" == "area under curve" == $\hat{p}$
 - Many different forms, depending on the data
 - All share some characteristics
@@ -462,10 +465,11 @@ class: inverse, middle, center
 ---
 # Modelling requirements
 
-- Include detectability
 - Account for effort
 - Flexible/interpretable effects
 - Predictions over an arbitrary area
+- Include detectability
+
 
 ---
 class: inverse, middle, center
@@ -558,19 +562,19 @@ class: inverse, middle, center
   - use **Horvitz-Thompson estimates** as response
 
 ---
-# Count model `count~...`
+# Count model
 
 - Area of each segment, $A_j$
   - use $A_j\hat{p}_j$
-- think effective strip width ( $\hat{\mu} = w\hat{p}$ )
+- 💭 effective strip width ( $\hat{\mu} = w\hat{p}$ )
 - Response is counts per segment
 - "Adjusting for effort"
-- "Count model"
 
 ![](images/esw_change.png)
 
 ---
-# Estimated abundance `abundance.est~...`
+
+# Estimated abundance
 
 - Effort is area of each segment
 - Estimate H-T abundance per segment
