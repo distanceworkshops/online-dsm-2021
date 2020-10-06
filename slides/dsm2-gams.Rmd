@@ -92,7 +92,7 @@ n_j = \color{red}{A_j}\color{blue}{\hat{p}_j}\color{green}{\exp} \left[ \color{g
 $$
 
 - $n_j$ has a distribution (count)
-- $\epsilon_j$ are errors (differences between model and observations)
+- $\epsilon_j$ are *residuals* (differences between model and observations)
 
 ---
 class: inverse, center, middle
@@ -109,7 +109,7 @@ $$
 \color{red}{n_j} = A_j\hat{p}_j \exp\left[ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j) \right] + \epsilon_j
 $$
 <br/>
-where $\epsilon_j$ are some errors, $\quad \color{red}{n_j\sim \text{count distribution}}$
+where $\color{red}{n_j\sim \text{count distribution}}$
 
 ---
 # Count distributions
@@ -126,8 +126,8 @@ hist(dsm_tw_xy_depth$data$count[dsm_tw_xy_depth$data$count>0],
 .pull-right[
 - Response is a count
 - Often, it's mostly zero
-- Flexible mean-variance relationship
-- (Poisson isn't good at this)
+- mean $\neq$ variance
+  - (Poisson isn't good at this)
 ]
 
 ---
@@ -207,8 +207,7 @@ for(i in 1:ncol(fymat)){
 $$
 n_j = A_j\hat{p}_j \exp\left[ \beta_0 + \color{red}{s(\text{y}_j) + s(\text{Depth}_j}) \right] + \epsilon_j
 $$
-<br/>
-where $\epsilon_j$ are some errors, $\quad n_j\sim$ count distribution
+
 
 ---
 # What about these "s" things?
@@ -258,15 +257,14 @@ plot(dsm_tw_xy_depth, select=2, shade=TRUE)
 ```
 
 ---
-# Smoothing
+# Estimating smooths
 
 .pull-left[
-- Estimate smooths
 - We set:
   - "type": *bases* (made up of *basis functions*)
-  - basis size/dimension/complexity -- *maximum wigglyness*
-- Automatically
-  - *estimate how wiggly it needs to be*
+  - "maximum wigglyness": *basis size* (sometimes: dimension/complexity)
+- Automatically estimate:
+  - "how wiggly it needs to be": *smoothing parameter(s)*
 ]
 .pull-right[
 ```{r wiggles-plot2}
