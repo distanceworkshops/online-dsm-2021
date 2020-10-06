@@ -252,12 +252,30 @@ hist(detected_distances, main="", xlab="Distance",breaks=seq(0,max(detected_dist
 # Detection function
 
 ```{r df-fit}
+# set truncation
+w <- 0.025
+
 hist(detected_distances, main="", xlab="Distance",breaks=seq(0,max(detected_distances),len=7), freq=FALSE, ylim=c(0, 85), axes=FALSE, ylab="Probability of detection")
 xx <- seq(0, 0.05, len=1000)
-lines(xx, exp(-xx^2/(2*sigma^2))/integrate(function(x)  exp(-x^2/(2*sigma^2)), lower=0, upper=0.02)$value)
+
+lines(xx, exp(-xx^2/(2*sigma^2))/integrate(function(x)  exp(-x^2/(2*sigma^2)), lower=0, upper=w)$value)
 axis(1)
-g0 <- 1/integrate(function(x)  exp(-x^2/(2*sigma^2)), lower=0, upper=0.02)$value
-axis(2, at=c(0, g0/2, g0), labels=c(0,0.5,1))
+
+library(Distance)
+dd <- ds(detected_distances, truncation=w, adjustment=NULL)
+
+# calculate effective strip width
+#mu <- integrate(function(x)  exp(-x^2/(2*sigma^2)), lower=0, upper=w)$value
+mu <- predict(dd, esw=TRUE)$fitted[1]
+# what is the value of the pdf at zero distance
+f0 <- 1/mu
+
+axis(2, at=c(0, f0/2, f0), labels=c(0,0.5,1))
+
+# mark truncation
+text(x=0.02, y=f0*0.75, label=paste("truncation w =", w))
+abline(v=w, lty=2, lwd=1.5)
+
 ```
 
 ---
@@ -265,23 +283,21 @@ axis(2, at=c(0, g0/2, g0), labels=c(0,0.5,1))
 
 ```{r calc-Nhat-line, echo=FALSE}
 ## calculate Nhat
-# calculate mu, since we know sigma and set w=0.02
-# calculate p = mu/w
-mu <- 1/g0
-p <- mu/0.02
-n<-length(detected_distances)
-covered <- 2*0.025*5
-Nhat.lt <- A*n/(covered*p)
+
+p <- mu/w
+n <- length(detected_distances[detected_distances<=w])
+covered <- 2*w*5
+Nhat.lt <- (A/covered)* (n/p)
 ```
 
-- Surveyed 5 lines (each area $1*0.025$)
-  - Total covered area $a=5*1*0.025 =$ `r covered`
+- Surveyed 5 lines (each area 1 $*$ 2 $*$ `r w`)
+  - Total covered area $a=$ 5 $*$ 1 $*$ (2 $*$ `r w`) = `r covered`
 - Probability of detection $\hat{p} =$ `r round(p,4)`
 - Saw $n=$ `r n` animals
 - Inflate to $n/\hat{p}=$ `r round(n/p, 3)`
-- Estimated density $\hat{D}=\frac{n/\hat{p}}{a}=$ `r round(n/(covered*p), 0)`
+- Estimated density $\hat{D}=\frac{n/\hat{p}}{a}=$ `r round(n/(covered*p), 1)`
 - Total area $A=1$
-- Estimated abundance $\hat{N}=\hat{D}A=$ `r  round(Nhat.lt, 0)`
+- Estimated abundance $\hat{N}=\hat{D}A=$ `r  round(Nhat.lt, 1)`
 
 ---
 # Reminder of assumptions
