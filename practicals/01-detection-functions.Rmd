@@ -64,7 +64,7 @@ hist(segs$Beaufort, breaks=seq(0, 5, by=1),
      xlab="Beaufort")
 ```
 
-We can see here that most of the segments had a Beaufort >= 2 and very few had Beaufort of 0-1 (right plot). We can see then that there are few observations at the lowest Beaufort (left plot) because there just wasn't much time to observe things in those conditions. We see that with increasing Beaufort observations fall off (right plot), even as there were plenty of segments with those higher Beaufort levels (right plot).
+We can see here that most of the segments had a Beaufort >= 2 and very few had Beaufort of 0-1 (right plot). We can see then that there are few observations at the lowest Beaufort (left plot) because there just wasn't much time to observe things in those conditions. We see that with increasing Beaufort observations fall off (left plot), even as there were plenty of segments with those higher Beaufort levels (right plot).
 
 We can create a rounded version of the variable using the `cut` function in R for later:
 ```{r beaufort-cut}
