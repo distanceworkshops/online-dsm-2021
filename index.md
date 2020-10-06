@@ -87,6 +87,8 @@ Note that this might take a while depending on your internet connection speed.
 - ["An Introduction to R" online book from Aberdeen University](https://alexd106.github.io/Rbook/)
 - [Distance sampling online](https://workshops.distancesampling.org/online-course/) free video lectures on distance sampling from CREEM
 - ["Distance sampling: methods and applications" book](https://www.springer.com/us/book/9783319192185) good overview of most of distance sampling. If your institution has a Springer account the ebook may be free for you and you can order a "MyCopy" paper version (softback, no colour figures) for $25.
+- [Online course on GAMs](https://noamross.github.io/gams-in-r-course/) by Noam Ross.
+- [GAM intro youtube video](https://www.youtube.com/watch?v=sgw4cu8hrZM) by Gavin Simpson.
 - [Further resources on generalized additve models](https://github.com/noamross/gam-resources) compiled by Noam Ross.
 
 
