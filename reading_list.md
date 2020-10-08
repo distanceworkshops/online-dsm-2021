@@ -81,6 +81,9 @@ Estimation of sperm whale abundance in the North Atlantic by NOAA:
 ### Smooths
 
 * Within `mgcv` the `?smooth.terms` manual page lists all spline bases available in `mgcv` (and therefore `dsm`)
+* Paper on `ts`/shrinkage smoothers
+  * Marra, G., & Wood, S. N. (2011). Practical variable selection for generalized additive models. Computational Statistics & Data Analysis, 55(7), 2372–2387. https://doi.org/10.1016/j.csda.2011.02.004
+
 
 ### Selecting basis size
 
