@@ -428,10 +428,8 @@ row.names(summary_table) <- c("`dsm_nb_xy_ms_p1_4` (p-value select))",
 ```{r print-table-03, results="asis"}
 # sort that table by AIC
 summary_table <- summary_table[order(summary_table$AIC),]
-# make a delta AIC column
-summary_table$deltaAIC <- round(summary_table$AIC - min(summary_table$AIC), 1)
-# remove the AIC column
-summary_table$AIC <- NULL
+# put columns in a nicer order with AIC last
+summary_table <- summary_table[, c("terms", "response", "AIC")]
 # print it in a nice format
 kable(summary_table, 
       caption = "Model selection table")
