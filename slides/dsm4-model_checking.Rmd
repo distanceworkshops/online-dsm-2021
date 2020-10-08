@@ -158,7 +158,7 @@ gam.check(dsm_x_tw_k)
 - Generally, double `k` and see what happens
 - Didn't increase the EDF much here
 - Other things can cause low "`p-value`" and "`k-index`"
-- Increasing `k` can cause problems (nullspace)
+- Increasing `k` can cause problems
 
 ---
 # k is a maximum

@@ -192,12 +192,12 @@ vis.gam(dsm_nb_xy, view=c("x","y"), plot.type="contour",
         too.far=0.1, main="s(x,y, k=25) (link scale)", asp=1)
 
 vis.gam(dsm_nb_x_y, view=c("x","y"), plot.type="contour", 
-        too.far=0.1, main="s(x,y, k=10) (link scale)", asp=1)
+        too.far=0.1, main="s(x) + s(y) (link scale)", asp=1)
 ```
 
-and at the plot of the smooths alone:
+We can also look at univariate plots of `s(x)` and `s(y)` for `dsm_nb_x_y`:
 
-``{r plot_x_y}
+```{r plot_x_y}
 plot(dsm_nb_x_y, pages=1)
 ```
 
