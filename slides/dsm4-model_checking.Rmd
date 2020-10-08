@@ -328,8 +328,9 @@ rqgam.check(dsm_x_tw)
 - Cycle through checks, make changes recheck
 
 ---
-# Observed vs. expected
 class: inverse, middle, center
+# Observed vs. expected
+
 
 ---
 # Response vs. fitted values
