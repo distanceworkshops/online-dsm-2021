@@ -83,6 +83,8 @@ Estimation of sperm whale abundance in the North Atlantic by NOAA:
 * Within `mgcv` the `?smooth.terms` manual page lists all spline bases available in `mgcv` (and therefore `dsm`)
 * Paper on `ts`/shrinkage smoothers
   * Marra, G., & Wood, S. N. (2011). Practical variable selection for generalized additive models. Computational Statistics & Data Analysis, 55(7), 2372–2387. https://doi.org/10.1016/j.csda.2011.02.004
+* Tensor product space-time model of Hawaiian songbirds
+  * Camp, RJ, DL Miller, L Thomas, ST Buckland and SJ Kendall (2020). Using density surface models to estimate spatio-temporal changes in population densities and trend. Ecography http://dx.doi.org/10.1111/ecog.04859
 
 
 ### Selecting basis size
