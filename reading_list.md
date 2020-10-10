@@ -38,7 +38,9 @@ Estimation of sperm whale abundance in the North Atlantic by NOAA:
 
 * [Analysis of 2004 surveys, plus a 1998 survey](http://www.nmfs.noaa.gov/pr/pdfs/sars/ao2005whsp-n.pdf).
 * [Results from 2011 survey](http://www.nmfs.noaa.gov/pr/sars/2013/ao2013_spermwhale-natl.pdf) (currently used for management purposes to set things like PBR, the number of sperm whales that can be killed) and [details of that methodology](http://www.nefsc.noaa.gov/nefsc/publications/crd/crd1229/crd1229.pdf).
-
+* Data were a subset of those used in:
+ * Roberts, J. J., Best, B. D., Mannocci, L., Fujioka, E., Halpin, P. N., Palka, D. L., Garrison, L. P., Mullin, K. D., Cole, T. V. N., Khan, C. B., McLellan, W. A., Pabst, D. A., & Lockhart, G. G. (2016). Habitat-based cetacean density models for the U.S. Atlantic and Gulf of Mexico. Scientific Reports, 6(1). https://doi.org/10.1038/srep22615
+  * [Online appendix with all analyses](http://seamap.env.duke.edu/models/Duke-EC-GOM-2015/)
 
 ## Introduction to distance sampling
 
@@ -85,6 +87,9 @@ Estimation of sperm whale abundance in the North Atlantic by NOAA:
   * Marra, G., & Wood, S. N. (2011). Practical variable selection for generalized additive models. Computational Statistics & Data Analysis, 55(7), 2372–2387. https://doi.org/10.1016/j.csda.2011.02.004
 * Tensor product space-time model of Hawaiian songbirds
   * Camp, RJ, DL Miller, L Thomas, ST Buckland and SJ Kendall (2020). Using density surface models to estimate spatio-temporal changes in population densities and trend. Ecography http://dx.doi.org/10.1111/ecog.04859
+* Soap film smoothing
+  * Wood, S. N., Bravington, M. V., & Hedley, S. L. (2008). Soap film smoothing. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 70(5), 931–955. https://doi.org/10.1111/j.1467-9868.2008.00665.x
+  * [Scripts to help in setting-up a soap film](https://github.com/dill/soap_checker)
 
 
 ### Selecting basis size
@@ -131,6 +136,7 @@ Estimation of sperm whale abundance in the North Atlantic by NOAA:
 
 * `dsmextra` package
   - [Package website](https://densitymodelling.github.io/dsmextra/index.html)
+  - Bouchet, PJ, Miller, DL, Roberts, JJ, Mannocci, L, Harris, CM, Thomas, L. dsmextra: Extrapolation assessment tools for density surface models. Methods Ecol Evol. 2020; 00: 1– 6. https://doi.org/10.1111/2041-210X.13469
   - Bouchet, PJ, Miller, DL, Roberts, J, Mannocci, L, Harris, CM & Thomas, L (2019) [From here and now to there and then: practical recommendations for extrapolating cetacean density surface models to novel conditions.](http://hdl.handle.net/10023/18509) CREEM Technical Report, no. 2019-1, University of St Andrews, 59 p.
 * Transferability
   * Yates, K. L., Bouchet, P. J., Caley, M. J., Mengersen, K., Randin, C. F., Parnell, S., Fielding, A. H., Bamford, A. J., Ban, S., Barbosa, A. M., Dormann, C. F., Elith, J., Embling, C. B., Ervin, G. N., Fisher, R., Gould, S., Graf, R. F., Gregr, E. J., Halpin, P. N., … Sequeira, A. M. M. (2018). [Outstanding Challenges in the Transferability of Ecological Models.](https://doi.org/10.1016/j.tree.2018.08.001) Trends in Ecology & Evolution, 33(10), 790–802. 
