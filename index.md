@@ -6,9 +6,7 @@ layout: index
 
 # Spatially explicit models for distance sampling data: density surface modelling in practice
 
-**5-9 October 2020, 1700-1900 BST // 1200-1400 EDT // 0900-1100 PDT**
-
-Previously: 8-12 June 2020, 1700-1900 BST // 1200-1400 EDT // 0900-1100 PDT
+**8-12 March 2021, 1600-1800 BST // 1100-1300 EDT // 0800-1000 PDT**
 
 This online course will cover how to fit spatial models to distance sampling data ("density surface modelling") in R. This will include:
 
@@ -61,7 +59,7 @@ Session     | Part                                                          | De
             | Practical 5 solutions ([Rmd](practicals/05-prediction-variance_solution.Rmd)) ([html](practicals/05-prediction-variance_solution.html)) |
 
 
-All materials here are available (including the sources for the slides) at [this github repository](https://github.com/distanceworkshops/online-dsm-2020).
+All materials here are available (including the sources for the slides) at [this github repository](https://github.com/distanceworkshops/online-dsm-2021).
 
 
 ### R requirements
