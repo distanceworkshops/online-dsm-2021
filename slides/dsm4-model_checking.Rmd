@@ -1,5 +1,5 @@
 ---
-title: "Model checking"
+title: "Lecture 4: Model checking"
 author: "David L Miller (`@millerdl`)"
 output:
   xaringan::moon_reader:

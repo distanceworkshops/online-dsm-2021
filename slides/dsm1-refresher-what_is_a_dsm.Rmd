@@ -83,7 +83,7 @@ class: inverse, middle, center
 
 ---
 class: inverse, middle, center
-# Back to regular distance sampling
+# A quick tour of distance sampling
 
 ---
 # How many animals are there? (500!)
@@ -300,7 +300,7 @@ Nhat.lt <- (A/covered)* (n/p)
 - Estimated abundance $\hat{N}=\hat{D}A=$ `r  round(Nhat.lt, 1)`
 
 ---
-# Reminder of assumptions
+# Distance sampling assumptions
 
 1. Animals are distributed independent of lines
 
@@ -315,6 +315,7 @@ Nhat.lt <- (A/covered)* (n/p)
 # What are detection functions?
 
 - $\mathbb{P}\left( \text{detection } \vert \text{ animal at distance } x \right)$
+- (But we want $\mathbb{P}\left( \text{detection } \right)= \hat{p}$)
 - "Integrate out distance" == "area under curve" == $\hat{p}$
 - Many different forms, depending on the data
 - All share some characteristics
@@ -337,12 +338,14 @@ curve(f, from=0, to=0.025, xlab="Distance", ylab="Probability of detection", mai
 
 - Using the package `Distance`
 - Function `ds()` does most of the work
-- More on this in the practical!
+
 
 ```{r echo=TRUE}
 library(Distance)
 df_hn <- ds(distdata, truncation=6000)
 ```
+
+<p align="center">More on this in the practical!</p>
 
 ---
 # Horvitz-Thompson-like estimators
@@ -358,11 +361,21 @@ $$
 - $\hat{p}_i$ is the detection probability (from detection function)
 
 ---
+class: inverse, middle, center
+# Why spatial modelling?
+## Horvitz-Thompson limitations
+
+---
 # Hidden in this formula is a simple assumption
 
 - Probability of sampling every point in the study area is equal
 - Is this true? Sometimes.
 - If (and only if) the design is randomised
+
+$$
+\hat{N} = \frac{\text{study area}}{\text{covered area}}\sum_{i=1}^n \frac{s_i}{\hat{p}_i \color{red}{\mathbb{P}(\text{included})}}
+$$
+
 
 ---
 # Many faces of randomisation
@@ -413,11 +426,17 @@ box()
 # Randomisation & coverage probability
 
 - H-T equation above assumes even coverage
-  - (or you can estimate)
+- (Distance for Windows can estimate this)
 
-<img src="images/bc_plan.png" width=35%> <img src="images/bad_coverage.png" width=45% align="right"> 
+<img src="images/bc_plan.png" width=35%> <img src="images/bad_coverage.png" width=35% align="right"> 
 
 ---
+class: inverse, middle, center
+# Why spatial modelling?
+## Extra spatial information
+
+---
+
 # Extra information
 
 ```{r plottracks, echo=FALSE}
@@ -471,14 +490,17 @@ print(p)
 
 ---
 class: inverse, middle, center
-# We should model that!
+# Density Surface Modelling overview
 
 ---
-# DSM flow diagram
+# Density Surface Modelling flow diagram
 
 <img src="images/dsm-flow.png" alt="DSM process flow diagram" width=100%>
 
+
 ---
+
+
 # Modelling requirements
 
 - Account for effort
@@ -584,7 +606,7 @@ class: inverse, middle, center
   - use $A_j\hat{p}_j$
 - 💭 effective strip width ( $\hat{\mu} = w\hat{p}$ )
 - Response is counts per segment
-- "Adjusting for effort"
+- "Adjusting for effective effort"
 
 ![](images/esw_change.png)
 
@@ -630,8 +652,6 @@ class: inverse, middle, center
   - ✅ Distance data/detection function
   - ✅ Segment data
   - ✅ Observation data (segments 🔗 detections)
-
-More info on course website.
 
 ---
 
