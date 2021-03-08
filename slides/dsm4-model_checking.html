@@ -110,7 +110,7 @@ class: inverse, middle, center
 
 - Often if there are fitting problems, you're asking too much from your data
 - Model is too complicated
-- Too little data
+- Too little data (check `n` in `summary`, is it right?)
 - Try something simpler, see what happens
 
 
@@ -181,10 +181,11 @@ gam.check(dsm_x_tw_k)
 ---
 # Sometimes basis size isn't the issue...
 
-- Generally, double `k` and see what happens
+- Easy rule:
+  - double `k` and see what happens
 - Didn't increase the EDF much here
 - Other things can cause low "`p-value`" and "`k-index`"
-- Increasing `k` can cause problems
+- Increasing `k` increases computing time
 
 ---
 # k is a maximum
@@ -202,7 +203,7 @@ class: inverse, middle, center
 ---
 # What are residuals?
 
-- Generally residuals = observed value - fitted value
+- Residuals = (observed value) - (fitted value)
 - BUT hard to see patterns in these "raw" residuals
 - Need to standardise `\(\Rightarrow\)` **deviance residuals**
 - Expect these residuals `\(\sim N(0,1)\)`
@@ -213,16 +214,6 @@ class: inverse, middle, center
 - Structure in the residuals means your model didn't capture something
 - Maybe a missing covariate
 - Model doesn't describe the data well
-
----
-# Residuals vs. covariates
-
-![](dsm4-model_checking_files/figure-html/covar-resids-1.png)&lt;!-- --&gt;
-
----
-# Residuals vs. covariates (boxplots)
-
-![](dsm4-model_checking_files/figure-html/covar-resids-boxplot-1.png)&lt;!-- --&gt;
 
 ---
 # Fitting to residuals
@@ -322,6 +313,21 @@ class: inverse, middle, center
 ![Bad residual check plot from Wood 2006](images/badgam-annotate.png)
 
 ---
+# Looking for artefacts
+
+.pull-left[
+- Want to avoid "pattern" in residuals
+- How to visualise?
+- Plot residuals vs. covariates
+- Should look like this
+]
+
+.pull-right[
+
+![](dsm4-model_checking_files/figure-html/covar-resids-boxplot-1.png)&lt;!-- --&gt;
+]
+
+---
 # Residual checks
 
 - Looking for patterns (not artifacts)
@@ -333,12 +339,11 @@ class: inverse, middle, center
 class: inverse, middle, center
 # Observed vs. expected
 
-
 ---
 # Response vs. fitted values
 
 - `gam.check` "response vs. fitted values"
-- BUT smooths are "wrong" everywhere in particular
+- BUT smooths are "wrong" everywhere in particular (but "right" on average!)
 
 ![](dsm4-model_checking_files/figure-html/gamcheck-response-fitted-1.png)&lt;!-- --&gt;
 

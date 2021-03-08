@@ -118,7 +118,7 @@ class: inverse, middle, center
 
 - Often if there are fitting problems, you're asking too much from your data
 - Model is too complicated
-- Too little data
+- Too little data (check `n` in `summary`, is it right?)
 - Try something simpler, see what happens
 
 
@@ -155,10 +155,11 @@ gam.check(dsm_x_tw_k)
 ---
 # Sometimes basis size isn't the issue...
 
-- Generally, double `k` and see what happens
+- Easy rule:
+  - double `k` and see what happens
 - Didn't increase the EDF much here
 - Other things can cause low "`p-value`" and "`k-index`"
-- Increasing `k` can cause problems
+- Increasing `k` increases computing time
 
 ---
 # k is a maximum
@@ -190,7 +191,7 @@ class: inverse, middle, center
 ---
 # What are residuals?
 
-- Generally residuals = observed value - fitted value
+- Residuals = (observed value) - (fitted value)
 - BUT hard to see patterns in these "raw" residuals
 - Need to standardise $\Rightarrow$ **deviance residuals**
 - Expect these residuals $\sim N(0,1)$
@@ -201,38 +202,6 @@ class: inverse, middle, center
 - Structure in the residuals means your model didn't capture something
 - Maybe a missing covariate
 - Model doesn't describe the data well
-
----
-# Residuals vs. covariates
-
-```{r covar-resids, fig.width=15}
-par(cex.axis=2, lwd=2, cex.lab=2)
-library(statmod)
-par(mfrow=c(1,2))
-plot(dsm_x_tw$data$x, residuals(dsm_x_tw), ylab="Deviance residuals", xlab="x")
-environment(dsm_x_tw$family$variance)$p <- dsm_x_tw$family$getTheta(TRUE)
-plot(dsm_x_tw$data$x, qres.tweedie(dsm_x_tw), ylab="Randomised quantile residuals", xlab="x")
-```
-
----
-# Residuals vs. covariates (boxplots)
-
-```{r covar-resids-boxplot, fig.width=15}
-par(cex.axis=2, lwd=2, cex.lab=2, las=2)
-library(statmod)
-par(mfrow=c(1,2))
-
-resid_dat <- data.frame(x     = dsm_x_tw$data$x,
-                        x_cut = cut(dsm_x_tw$data$x,
-                                    seq(min(dsm_x_tw$data$x),
-                                        max(dsm_x_tw$data$x),
-                                        len=20)),
-                        dres  = residuals(dsm_x_tw),
-                        qres  = qres.tweedie(dsm_x_tw))
-
-plot(dres~x_cut, data=resid_dat, ylab="Deviance residuals", xlab="x")
-plot(qres~x_cut, data=resid_dat, ylab="Randomised quantile residuals", xlab="x")
-```
 
 ---
 # Fitting to residuals
@@ -320,6 +289,36 @@ rqgam.check(dsm_x_tw)
 ![Bad residual check plot from Wood 2006](images/badgam-annotate.png)
 
 ---
+# Looking for artefacts
+
+.pull-left[
+- Want to avoid "pattern" in residuals
+- How to visualise?
+- Plot residuals vs. covariates
+- Should look like this
+]
+
+.pull-right[
+
+```{r covar-resids-boxplot, fig.width=9}
+par(cex.axis=2, lwd=2, cex.lab=2, las=2)
+library(statmod)
+
+# fiddle to use qres.tweedie with mgcv tw() model
+environment(dsm_x_tw$family$variance)$p <- dsm_x_tw$family$getTheta(TRUE)
+
+resid_dat <- data.frame(x     = dsm_x_tw$data$x,
+                        x_cut = cut(dsm_x_tw$data$x,
+                                    seq(min(dsm_x_tw$data$x),
+                                        max(dsm_x_tw$data$x),
+                                        len=20)),
+                        qres  = qres.tweedie(dsm_x_tw))
+
+plot(qres~x_cut, data=resid_dat, ylab="Deviance residuals", xlab="x")
+```
+]
+
+---
 # Residual checks
 
 - Looking for patterns (not artifacts)
@@ -331,12 +330,11 @@ rqgam.check(dsm_x_tw)
 class: inverse, middle, center
 # Observed vs. expected
 
-
 ---
 # Response vs. fitted values
 
 - `gam.check` "response vs. fitted values"
-- BUT smooths are "wrong" everywhere in particular
+- BUT smooths are "wrong" everywhere in particular (but "right" on average!)
 
 ```{r gamcheck-response-fitted, fig.height=6, fig.width=6}
 class(dsm_x_tw) <- class(dsm_x_tw)[-1]
