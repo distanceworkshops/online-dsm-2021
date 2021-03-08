@@ -58,14 +58,18 @@ dsm_tw_xy_depth <- dsm(count ~ s(x, y) + s(Depth), ddf.obj=df, observation.data=
 # Building a model, from scratch
 
 - Know count $n_j$ in segment $j$
-- Want :
+--
 
+- Want :
 $$
 n_j = f( [\text{environmental covariates}]_j)
 $$
 
-- Additive model of smooths $s$:
+--
+- How to build $f$?
 
+--
+- Additive model of smooths $s$:
 $$
 n_j = \color{green}{\exp} \left[ \color{grey}{ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j)} \right]
 $$
@@ -279,43 +283,21 @@ curve(f2,0,1, col="blue", add=TRUE)
 
 # Splines
 
-.pull-left[
-```{r results='hide'}
-par(cex=1.5, mar=c(5, 4, 1, 2) + 0.1, ps=20)
-set.seed(2)
-datb <- gamSim(1,n=400,dist="normal",scale=2)
-bb <- gam(y~s(x0, k=10, bs="bs"),data=datb)
-
-# main plot
-plot(bb, se=FALSE, ylim=c(-1, 1), lwd=3, col="blue", rug=FALSE)
-
-# plot each basis
-cf <- coef(bb)
-xp <- data.frame(x0=seq(0, 1, length.out=100))
-Xp <- predict(bb, newdata=xp, type="lpmatrix")
-
-for(i in 2:length(cf)){
-  cf_c <- cf
-  cf_c[-i] <- 0
-  cf_c[i] <- 1
-  lines(xp$x0, as.vector(Xp%*%cf_c), lty=i+1, lwd=3)
-}
-```
-]
-.pull-right[
-
 - Functions made of other, simpler functions
 - **Basis functions** $b_k$, estimate $\beta_k$ 
 - $s(x) = \sum_{k=1}^K \beta_k b_k(x)$
-]
+
+![splines](images/basis-animate-1.gif)
+
+<!-- code at https://github.com/pedersen-fisheries-lab/DFO-3day-gam-workshop/blob/master/slides/01-1D-smoothing.Rmd#L241 -->
 
 ---
-# Measuring wigglyness
+# Thinking about wigglyness
 
 - Visually:
   - Lots of wiggles $\Rightarrow$ *not smooth*
   - Straight line $\Rightarrow$ *very smooth*
-
+- Smoothing parameter ( $\lambda$ ) controls this
 
 ```{r wiggles-plot, fig.width=18, fig.height=7}
 # make three plots, w. estimated smooth, truth and data on each
@@ -340,9 +322,8 @@ curve(f2,0,1, col="blue", add=TRUE)
 
 # How wiggly are things?
 
-
-- Set **basis complexity** or "size" $k$
-- Fitted smooths have **effective degrees of freedom** (EDF)
+- Measure the **effective degrees of freedom** (EDF)
+- Set **basis complexity** or "size", $k$
 - Set $k$ "large enough"
 
 ```{r wiggles-plot-EDF, fig.width=18, fig.height=8}
@@ -376,8 +357,8 @@ curve(f2,0,1, col="blue", add=TRUE)
 - (also a good textbook on GLMs and GLMMs)
 - Quite technical in places
 - More resources on course website
+- `dsm` is based on `mgcv` by Simon Wood
 ]
-
 
 ---
 class: inverse, middle, center
@@ -408,7 +389,6 @@ dsm_x_tw <- dsm(count~s(x), ddf.obj=df,
                 family=tw())
 ```
 
-`dsm` is based on `mgcv` by Simon Wood
 
 
 ---

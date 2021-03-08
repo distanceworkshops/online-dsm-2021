@@ -4,7 +4,7 @@
     <title>Lecture 2: Generalized Additive Models</title>
     <meta charset="utf-8" />
     <meta name="author" content="David L Miller (@millerdl)" />
-    <script src="libs/header-attrs-2.3/header-attrs.js"></script>
+    <script src="libs/header-attrs-2.7/header-attrs.js"></script>
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
     <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
     <link rel="stylesheet" href="custom.css" type="text/css" />
@@ -37,14 +37,18 @@ class: title-slide, inverse, center, middle
 # Building a model, from scratch
 
 - Know count `\(n_j\)` in segment `\(j\)`
-- Want :
+--
 
+- Want :
 $$
 n_j = f( [\text{environmental covariates}]_j)
 $$
 
-- Additive model of smooths `\(s\)`:
+--
+- How to build `\(f\)`?
 
+--
+- Additive model of smooths `\(s\)`:
 $$
 n_j = \color{green}{\exp} \left[ \color{grey}{ \beta_0 + s(\text{y}_j) + s(\text{Depth}_j)} \right]
 $$
@@ -180,23 +184,21 @@ class: inverse, middle, center
 
 # Splines
 
-.pull-left[
-![](dsm2-gams_files/figure-html/unnamed-chunk-1-1.svg)&lt;!-- --&gt;
-]
-.pull-right[
-
 - Functions made of other, simpler functions
 - **Basis functions** `\(b_k\)`, estimate `\(\beta_k\)` 
 - `\(s(x) = \sum_{k=1}^K \beta_k b_k(x)\)`
-]
+
+![splines](images/basis-animate-1.gif)
+
+&lt;!-- code at https://github.com/pedersen-fisheries-lab/DFO-3day-gam-workshop/blob/master/slides/01-1D-smoothing.Rmd#L241 --&gt;
 
 ---
-# Measuring wigglyness
+# Thinking about wigglyness
 
 - Visually:
   - Lots of wiggles `\(\Rightarrow\)` *not smooth*
   - Straight line `\(\Rightarrow\)` *very smooth*
-
+- Smoothing parameter ( `\(\lambda\)` ) controls this
 
 ![](dsm2-gams_files/figure-html/wiggles-plot-1.svg)&lt;!-- --&gt;
 
@@ -205,9 +207,8 @@ class: inverse, middle, center
 
 # How wiggly are things?
 
-
-- Set **basis complexity** or "size" `\(k\)`
-- Fitted smooths have **effective degrees of freedom** (EDF)
+- Measure the **effective degrees of freedom** (EDF)
+- Set **basis complexity** or "size", `\(k\)`
 - Set `\(k\)` "large enough"
 
 ![](dsm2-gams_files/figure-html/wiggles-plot-EDF-1.svg)&lt;!-- --&gt;
@@ -225,8 +226,8 @@ class: inverse, middle, center
 - (also a good textbook on GLMs and GLMMs)
 - Quite technical in places
 - More resources on course website
+- `dsm` is based on `mgcv` by Simon Wood
 ]
-
 
 ---
 class: inverse, middle, center
@@ -258,7 +259,6 @@ dsm_x_tw &lt;- dsm(count~s(x), ddf.obj=df,
                 family=tw())
 ```
 
-`dsm` is based on `mgcv` by Simon Wood
 
 
 ---
@@ -281,7 +281,7 @@ dsm_x_tw &lt;- dsm(count~s(x), ddf.obj=df,
 ## 
 ## Approximate significance of smooth terms:
 ##        edf Ref.df     F  p-value    
-## s(x) 4.962  6.047 6.403 1.07e-06 ***
+## s(x) 4.962  6.047 6.403 1.79e-06 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -336,9 +336,9 @@ dsm_xy_tw &lt;- dsm(count ~ s(x) + s(y),
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Approximate significance of smooth terms:
-##        edf Ref.df     F  p-value    
-## s(x) 4.943  6.057 3.224 0.004239 ** 
-## s(y) 5.293  6.419 4.034 0.000322 ***
+##        edf Ref.df     F p-value    
+## s(x) 4.943  6.057 3.224 0.00425 ** 
+## s(y) 5.293  6.419 4.034 0.00033 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -395,8 +395,8 @@ dsm_xyb_tw &lt;- dsm(count ~ s(x, y),
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Approximate significance of smooth terms:
-##          edf Ref.df     F  p-value    
-## s(x,y) 16.89  21.12 4.333 3.73e-10 ***
+##          edf Ref.df     F p-value    
+## s(x,y) 16.89  21.12 4.333  &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
