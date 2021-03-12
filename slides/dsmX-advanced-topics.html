@@ -48,8 +48,6 @@ class: inverse, center, middle
 .pull-left[
 - We can built interactions using `te()`
 - Construct 2D basis from 2 1D bases
-- Biomass as a function of temperature and depth?
-  - `te(temp_bottom, depth)`
 - 💭 "marginal 1Ds, join them up"
 ]
 
@@ -183,7 +181,8 @@ dsm_ti &lt;- dsm(count ~ ti(Depth, SST) + ti(Depth) + ti(SST),
   - `k=` smaller for temporal covariate?
 - Use cubic spline basis for time?
   - simpler basis, even knot placement
-- When using `ti()` everything needs to match up!
+- When using `ti()` arguments (`k`, `bs`) need to match up between terms
+  - if `k=3` for `Depth` in one term it needs to be that in all terms
 
 
 ---

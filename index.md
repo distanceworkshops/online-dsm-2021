@@ -51,8 +51,8 @@ Session     | Part                                                          | De
             | [Lecture 4 (PDF)](slides/dsm4-model_checking.pdf)             | Model checking
             | Practical 4 ([Rmd](practicals/04-model-checking.Rmd)) ([html](practicals/04-model-checking.html))       | Checking previous models
             | Practical 4 solutions ([Rmd](practicals/04-model-checking_solution.Rmd)) ([html](practicals/04-model-checking_solution.html))       |
-*Friday*    | [Lecture 5](slides/dsm5-prediction-variance-advice.html) [Extras](slides/dsmX-advanced-topics.html)     | Recap/solutions for "Checking previous models"
-            | [Lecture 5 (PDF)](slides/dsm5-prediction-variance-advice.pdf) [Extra (PDF)](slides/dsmX-advanced-topics.pdf) | Making predictions
+*Friday*    | [Lecture 5](slides/dsm5-prediction-variance-advice.html), [Extras](slides/dsmX-advanced-topics.html)     | Recap/solutions for "Checking previous models"
+            | [Lecture 5 (PDF)](slides/dsm5-prediction-variance-advice.pdf), [Extra (PDF)](slides/dsmX-advanced-topics.pdf) | Making predictions
             |                                                               | Estimating variance
             |                                                               | Practical advice
             | Practical 5 ([Rmd](practicals/05-prediction-variance.Rmd)) ([html](practicals/05-prediction-variance.html))  | Making predictions, variance estimation, maps

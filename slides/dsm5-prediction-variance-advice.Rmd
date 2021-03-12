@@ -353,7 +353,8 @@ $$
 
 - Assumes detection function and GAM are **independent**
 - This is okay if:
-  - no detection function covariates
+  - no detection function covariates *or*
+  - detection covariates won't be correlated with spatial model
 
 ![](images/delta_when.png)
 ---
