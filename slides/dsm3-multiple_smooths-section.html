@@ -105,11 +105,13 @@ class: inverse, middle, center
 # Term selection
 
 .pull-left[
-Two popular approaches (using `\(p\)`-values)
+Two popular approaches:
 
-**Stepwise selection** - path dependence
-
-**All possible subsets** - computationally expensive (fishing?)
+1. **Stepwise selection** (using `\(p\)`-values)
+  - Problem: path dependence
+2. **All possible subsets**
+   - Problem: computationally expensive
+   - Problem: fishing?
 ]
 .pull-right[
 &lt;img src="images/gnome.jpg"&gt;
@@ -187,7 +189,6 @@ This isn't very satisfactory!
 .pull-left[
 - Basis `s(..., bs="ts")` - thin plate splines *with shrinkage*
 - remove the wiggles **then** remove the "linear" bits
-- nullspace should be shrunk less than the wiggly part
 ]
 .pull-right[
 ![animation of penalty in action](images/shrinky_dink_ts.gif)
@@ -326,7 +327,6 @@ class: inverse, middle, center
 ---
 # Akaike's "An Information Criterion"
 
-- As for many other models, we can get an AIC from our model
 - Comparison of AIC fine **but**:
   - can't compare Tweedie (continuous) and negative binomial (discrete) distributions!
   - (*within* distribution is fine)
@@ -364,8 +364,8 @@ class: inverse, middle, center
 # Using reference bands
 
 - What is down to random variation?
-- Where does the model actually fail?
 - Resampling the response, generate bands
+- Better idea of how close we are
 
 ```
 qq.gam(dsm_all, asp=1, main="Tweedie",

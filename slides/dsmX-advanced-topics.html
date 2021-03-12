@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Extras and advanced topics</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="David L Miller (@millerdl)" />
+    <script src="libs/header-attrs-2.7/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="custom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+class: title-slide, inverse, center, middle
+
+#Extras&lt;br/&gt;and&lt;/br&gt;advanced topics
+
+&lt;div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px"&gt;
+&lt;img src="images/02-foundation-vertical-white.png" height="200"&gt;
+&lt;/div&gt;
+
+---
+
+
+
+
+class: inverse, center, middle
+
+# More complicated effects
+
+---
+
+# `s(x,y)` doesn't always work
+
+- Only works for `bs="tp"` or `bs="ts"`
+- Covariates are isotropic
+- What if we wanted to use lat/long?
+- Or, more generally: interactions between covariates?
+
+---
+
+# Enter `te()`
+
+.pull-left[
+- We can built interactions using `te()`
+- Construct 2D basis from 2 1D bases
+- Biomass as a function of temperature and depth?
+  - `te(temp_bottom, depth)`
+- 💭 "marginal 1Ds, join them up"
+]
+
+.pull-right[
+![](dsmX-advanced-topics_files/figure-html/tensor-1.png)&lt;!-- --&gt;
+]
+
+---
+
+# Using `te()`
+
+Just like `s()`:
+
+
+
+```r
+dsm_te &lt;- dsm(count ~ te(Depth, SST),
+              ddf.obj=df_hr,
+              observation.data=obs, segment.data=segs,
+              family=tw())
+```
+
+---
+
+# `summary`
+
+
+```
+## 
+## Family: Tweedie(p=1.282) 
+## Link function: log 
+## 
+## Formula:
+## count ~ te(Depth, SST) + offset(off.set)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -20.3862     0.2831  -72.02   &lt;2e-16 ***
+## ---
+## Signif. codes:  
+## 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##                 edf Ref.df     F p-value    
+## te(Depth,SST) 11.79  14.03 7.104  &lt;2e-16 ***
+## ---
+## Signif. codes:  
+## 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## R-sq.(adj) =  0.117   Deviance explained = 36.6%
+## -REML = 387.64  Scale est. = 4.5541    n = 949
+```
+
+
+---
+
+
+# Things to fiddle with
+
+- Setting `k=` 2 ways:
+  - `k=5`: 5 for all covariates (total `\(5*5=25\)`)
+  - `k=c(3,5)`: per basis, in order (total `\(3*5=15\)`)
+- Setting `bs=` 2 ways:
+  - `bs="tp"`: tprs for all bases
+  - `bs=c("tp", "tp")`: tprs per basis
+
+---
+
+# Pulling `te()` apart: `ti()`
+
+- Can we look at the components of the `te()`
+- `te(x, y) = ti(x, y) + ti(x) + ti(y)`
+
+
+```r
+dsm_ti &lt;- dsm(count ~ ti(Depth, SST) + ti(Depth) + ti(SST),
+                       ddf.obj=df_hr,
+                       observation.data=obs, segment.data=segs,
+                       family=tw())
+```
+
+---
+# `summary`
+
+
+```
+## 
+## Family: Tweedie(p=1.281) 
+## Link function: log 
+## 
+## Formula:
+## count ~ ti(Depth, SST) + ti(Depth) + ti(SST) + offset(off.set)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -20.4337     0.2868  -71.25   &lt;2e-16 ***
+## ---
+## Signif. codes:  
+## 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##                 edf Ref.df      F  p-value    
+## ti(Depth,SST) 2.295  2.794  2.068    0.124    
+## ti(Depth)     3.477  3.817 16.905  &lt; 2e-16 ***
+## ti(SST)       3.175  3.505  8.492 4.08e-06 ***
+## ---
+## Signif. codes:  
+## 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## R-sq.(adj) =  0.114   Deviance explained =   36%
+## -REML = 387.37  Scale est. = 4.5448    n = 949
+```
+
+---
+
+# Space x time
+
+- We had a 2d spatial model, add time?
+  - `te(x, y, year)` ?
+- `d=` groups covariates
+  - `te(x, y, year, d=c(2, 1))` gives `x, y` smooth and `year` smooth tensor
+- (Assuming default `k=` and `bs=` for bases above)
+
+
+---
+
+# Fiddling
+
+- Often fewer temporal replicates
+  - Fewer years than unique locations
+  - `k=` smaller for temporal covariate?
+- Use cubic spline basis for time?
+  - simpler basis, even knot placement
+- When using `ti()` everything needs to match up!
+
+
+---
+class: inverse, center, middle
+
+# Other effects
+
+---
+
+# Random effects
+
+- "Simple" random slope/random intercept models
+- `s(..., bs="re")`
+- **think** about what these models mean
+
+---
+
+# Factor-smooth interactions
+
+- What if we only have a few "years"?
+- What if we don't think the "years" are smooth?
+  - (Before/after?)
+- Terms like `s(Depth, by=year)` change the smooth by year
+- also `s(Depth, year, bs="fs")` (lots of ways to specify)
+- see [Pedersen et al. (2019)](https://peerj.com/articles/6876/) for more on these models
+
+---
+class: inverse, center, middle
+
+# Availability
+
+---
+
+# Availability
+
+- Is an animal *available* to be detected
+- e.g., diving marine mammals
+- Primitive way to do this in `dsm`
+- `availability=` for each segment (only for `count` models)
+- Active research area!
+
+---
+class: inverse, center, middle
+
+# g(0), MRDS etc
+
+---
+
+# Mark-recapture distance sampling
+
+- Will be able to include these models in next `dsm` release
+- Only independent observer ("`io`") and trial ("`trial`") modes supported
+- [Example here](https://github.com/densitymodelling/nefsc_fin_mrds_dsm)
+
+---
+
+class: inverse, center, middle
+
+# Combining multiple surveys
+
+---
+
+# Combining multiple surveys
+
+- What about combining aerial/shipboard data?
+- Different detection functions
+- Again, next `dsm` release allows this
+- [Fitting complicated models](https://github.com/densitymodelling/nefsc_fin_mrds_dsm) example
+
+---
+class: inverse, center, middle
+
+# Finally...
+
+---
+
+# Recent developments
+
+- New `dsm` out in the next few weeks!
+- [Fitting DSMs in JAGS/Nimble](https://github.com/densitymodelling/nimble_scrubjay)
+- [DenMod project](https://synergy.st-andrews.ac.uk/denmod/about/) has produced lots of methodology
+- Society for Marine Mammalogy meeting December
+
+---
+class: inverse, center, middle
+
+# Extra bits
+
+---
+class: inverse, center, middle
+
+# Deviance explained, explained
+
+---
+
+# Deviance explained, explained
+
+- Avoid `\(R^2\)` (see [these notes](https://www.stat.cmu.edu/~cshalizi/mreg/15/lectures/10/lecture-10.pdf) for more info)
+- But what about deviance explained?
+- First, what is it?
+
+$$
+D = -2(\mathcal{l}_s - \mathcal{l})
+$$
+
+where `\(\mathcal{L}_s\)` is the *saturated* log likelihood and `\(\mathcal{L}\)` is the likelihood of our model.
+
+- Saturated means the "best" model we can get, one parameter per data point.
+- So meaning is it's relative to the best we can do *for this model*
+
+---
+
+# Deviance explained, explained
+
+- `mgcv` reports "Deviance explained" as a percentage
+
+$$
+D_{\%} = 100 (\mathcal{l}_s - \mathcal{l})/ \mathcal{l}_s
+$$
+
+- Problem: for different models (with different numbers of parameters) `\(\mathcal{l}_s\)` is different
+- So are we making fair comparisons?
+- AIC is simpler and easier to think about!
+
+
+[More info on deviance for GAMs](https://stats.stackexchange.com/a/191235)
+
+---
+
+# More difficulties with explanatory power
+
+- Low (&lt;60%) deviance is common. But why?
+- Sampling a temporally variable system
+- Revisiting the same place multiple times, we might get zero counts twice and then one large count.
+- What should the model make of this?
+- Without explicit temporal model, it tries to average
+- So prediction will be a "medium" count, bad prediction for the zeros and the large counts
+- No one is happy!
+- See observed vs. expected diagnostics etc
+
+---
+class: inverse, center, middle
+# That's all folks!
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-MML-AM_HTMLorMML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

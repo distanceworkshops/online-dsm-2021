@@ -1,0 +1,323 @@
+---
+title: "Extras and advanced topics"
+author: "David L Miller (`@millerdl`)"
+output:
+  xaringan::moon_reader:
+    nature:
+      highlightStyle: github
+      highlightLines: true
+    seal: false
+    lib_dir: libs
+    mathjax: "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-MML-AM_HTMLorMML"
+css: custom.css
+
+---
+
+```{r setup, include=FALSE}
+# setup
+library(knitr)
+library(magrittr)
+library(viridis)
+library(reshape2)
+library(animation)
+opts_chunk$set(cache=TRUE, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE)
+
+# some useful libraries
+library(RColorBrewer)
+library(ggplot2)
+library(cowplot)
+library(sf)
+library(rnaturalearth)
+library(patchwork)
+theme_set(theme_cowplot(20))
+
+options(width = 60)
+
+```
+
+class: title-slide, inverse, center, middle
+
+#Extras<br/>and</br>advanced topics
+
+<div style="position: absolute; bottom: 15px; vertical-align: center; left: 10px">
+<img src="images/02-foundation-vertical-white.png" height="200">
+</div>
+
+---
+
+
+```{r initialmodeletc, echo=FALSE, message=FALSE, warning=FALSE}
+load("../data/spermwhale.RData")
+library(Distance)
+library(dsm)
+df_hr <- ds(distdata, truncation=6000, key="hr")
+dsm_tw_xy_depth <- dsm(count ~ s(x, y) + s(Depth), ddf.obj=df_hr, observation.data=obs, segment.data=segs, family=tw())
+# fit a quick model from previous exercises
+dsm_all_tw_rm <- dsm(count~s(x, y, bs="ts") +
+                           s(Depth, bs="ts"),
+                     ddf.obj=df_hr,
+                     segment.data=segs, observation.data=obs,
+                     family=tw(), method="REML")
+```
+
+class: inverse, center, middle
+
+# More complicated effects
+
+---
+
+# `s(x,y)` doesn't always work
+
+- Only works for `bs="tp"` or `bs="ts"`
+- Covariates are isotropic
+- What if we wanted to use lat/long?
+- Or, more generally: interactions between covariates?
+
+---
+
+# Enter `te()`
+
+.pull-left[
+- We can built interactions using `te()`
+- Construct 2D basis from 2 1D bases
+- Biomass as a function of temperature and depth?
+  - `te(temp_bottom, depth)`
+- 💭 "marginal 1Ds, join them up"
+]
+
+.pull-right[
+```{r tensor, echo=FALSE, results='hide', fig.width=8, fig.height=6, messages=FALSE, warning=FALSE}
+dsm_tw_xy_depth <- dsm(count ~ ti(Depth, SST) + ti(Depth) + ti(SST), 
+                       ddf.obj=df_hr,
+                       observation.data=obs, segment.data=segs, family=tw())
+layout(matrix(c(1,2,3,3), 2, 2), widths=c(1.5,1.5,1), height=c(1,1,2))
+opar <- par(mar=c(4, 3, 1, 2) + 0.1)
+plot(dsm_tw_xy_depth, select=3)
+plot(dsm_tw_xy_depth, select=2)
+par(mar=c(0, 0, 0, 0) + 0.1)
+vis.gam(dsm_tw_xy_depth, view=c("Depth","SST"), theta=-60, phi=30, color="bw")
+par(opar)
+```
+]
+
+---
+
+# Using `te()`
+
+Just like `s()`:
+
+
+```{r te-ex, echo=TRUE}
+dsm_te <- dsm(count ~ te(Depth, SST),
+              ddf.obj=df_hr,
+              observation.data=obs, segment.data=segs,
+              family=tw())
+```
+
+---
+
+# `summary`
+
+```{r te-summ}
+summary(dsm_te)
+```
+
+
+---
+
+
+# Things to fiddle with
+
+- Setting `k=` 2 ways:
+  - `k=5`: 5 for all covariates (total $5*5=25$)
+  - `k=c(3,5)`: per basis, in order (total $3*5=15$)
+- Setting `bs=` 2 ways:
+  - `bs="tp"`: tprs for all bases
+  - `bs=c("tp", "tp")`: tprs per basis
+
+---
+
+# Pulling `te()` apart: `ti()`
+
+- Can we look at the components of the `te()`
+- `te(x, y) = ti(x, y) + ti(x) + ti(y)`
+
+```{r tiex, echo=TRUE}
+dsm_ti <- dsm(count ~ ti(Depth, SST) + ti(Depth) + ti(SST),
+                       ddf.obj=df_hr,
+                       observation.data=obs, segment.data=segs,
+                       family=tw())
+
+```
+
+---
+# `summary`
+
+```{r ti-summ}
+summary(dsm_ti)
+```
+
+---
+
+# Space x time
+
+- We had a 2d spatial model, add time?
+  - `te(x, y, year)` ?
+- `d=` groups covariates
+  - `te(x, y, year, d=c(2, 1))` gives `x, y` smooth and `year` smooth tensor
+- (Assuming default `k=` and `bs=` for bases above)
+
+
+---
+
+# Fiddling
+
+- Often fewer temporal replicates
+  - Fewer years than unique locations
+  - `k=` smaller for temporal covariate?
+- Use cubic spline basis for time?
+  - simpler basis, even knot placement
+- When using `ti()` everything needs to match up!
+
+
+---
+class: inverse, center, middle
+
+# Other effects
+
+---
+
+# Random effects
+
+- "Simple" random slope/random intercept models
+- `s(..., bs="re")`
+- **think** about what these models mean
+
+---
+
+# Factor-smooth interactions
+
+- What if we only have a few "years"?
+- What if we don't think the "years" are smooth?
+  - (Before/after?)
+- Terms like `s(Depth, by=year)` change the smooth by year
+- also `s(Depth, year, bs="fs")` (lots of ways to specify)
+- see [Pedersen et al. (2019)](https://peerj.com/articles/6876/) for more on these models
+
+---
+class: inverse, center, middle
+
+# Availability
+
+---
+
+# Availability
+
+- Is an animal *available* to be detected
+- e.g., diving marine mammals
+- Primitive way to do this in `dsm`
+- `availability=` for each segment (only for `count` models)
+- Active research area!
+
+---
+class: inverse, center, middle
+
+# g(0), MRDS etc
+
+---
+
+# Mark-recapture distance sampling
+
+- Will be able to include these models in next `dsm` release
+- Only independent observer ("`io`") and trial ("`trial`") modes supported
+- [Example here](https://github.com/densitymodelling/nefsc_fin_mrds_dsm)
+
+---
+
+class: inverse, center, middle
+
+# Combining multiple surveys
+
+---
+
+# Combining multiple surveys
+
+- What about combining aerial/shipboard data?
+- Different detection functions
+- Again, next `dsm` release allows this
+- [Fitting complicated models](https://github.com/densitymodelling/nefsc_fin_mrds_dsm) example
+
+---
+class: inverse, center, middle
+
+# Finally...
+
+---
+
+# Recent developments
+
+- New `dsm` out in the next few weeks!
+- [Fitting DSMs in JAGS/Nimble](https://github.com/densitymodelling/nimble_scrubjay)
+- [DenMod project](https://synergy.st-andrews.ac.uk/denmod/about/) has produced lots of methodology
+- Society for Marine Mammalogy meeting December
+
+---
+class: inverse, center, middle
+
+# Extra bits
+
+---
+class: inverse, center, middle
+
+# Deviance explained, explained
+
+---
+
+# Deviance explained, explained
+
+- Avoid $R^2$ (see [these notes](https://www.stat.cmu.edu/~cshalizi/mreg/15/lectures/10/lecture-10.pdf) for more info)
+- But what about deviance explained?
+- First, what is it?
+
+$$
+D = -2(\mathcal{l}_s - \mathcal{l})
+$$
+
+where $\mathcal{L}_s$ is the *saturated* log likelihood and $\mathcal{L}$ is the likelihood of our model.
+
+- Saturated means the "best" model we can get, one parameter per data point.
+- So meaning is it's relative to the best we can do *for this model*
+
+---
+
+# Deviance explained, explained
+
+- `mgcv` reports "Deviance explained" as a percentage
+
+$$
+D_{\%} = 100 (\mathcal{l}_s - \mathcal{l})/ \mathcal{l}_s
+$$
+
+- Problem: for different models (with different numbers of parameters) $\mathcal{l}_s$ is different
+- So are we making fair comparisons?
+- AIC is simpler and easier to think about!
+
+
+[More info on deviance for GAMs](https://stats.stackexchange.com/a/191235)
+
+---
+
+# More difficulties with explanatory power
+
+- Low (<60%) deviance is common. But why?
+- Sampling a temporally variable system
+- Revisiting the same place multiple times, we might get zero counts twice and then one large count.
+- What should the model make of this?
+- Without explicit temporal model, it tries to average
+- So prediction will be a "medium" count, bad prediction for the zeros and the large counts
+- No one is happy!
+- See observed vs. expected diagnostics etc
+
+---
+class: inverse, center, middle
+# That's all folks!

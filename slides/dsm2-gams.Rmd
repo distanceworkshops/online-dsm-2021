@@ -166,7 +166,9 @@ legend(x="topright", legend=p, fill=rr, inset=0.05)
 .pull-right[
 -  $\text{Var}\left(\text{count}\right) = \phi\mathbb{E}(\text{count})^q$
 - Poisson is $q=1$ 
-- We estimate $q$ and $\phi$ 
+- We estimate:
+  - $q$ (`p` in R), "power" parameter
+  - $\phi$ (`Scale est.` in R), scale parameter
 ]
 
 ---
@@ -202,6 +204,7 @@ for(i in 1:ncol(fymat)){
 .pull-right[
 - $\text{Var}\left(\text{count}\right) =$ $\mathbb{E}(\text{count}) + \kappa \mathbb{E}(\text{count})^2$
 - Estimate $\kappa$
+- No scale parameter (`Scale est.`=1 always)
 - (Poisson: $\text{Var}\left(\text{count}\right) =\mathbb{E}(\text{count})$) 
 ]
 
@@ -455,6 +458,8 @@ plot(dsm_xy_tw, pages=1, lwd=3)
 - Assumed an additive structure
 - No interaction
 - We can specify `s(x,y)` (and `s(x,y,z,...)`)
+- `s(x, y)` assumes `x` and `y` are on the same scale
+  - (actually that they are isotropic/rotationally invariant)
 
 ---
 # Bivariate spatial term

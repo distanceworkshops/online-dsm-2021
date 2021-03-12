@@ -118,7 +118,9 @@ where `\(\color{red}{n_j\sim \text{count distribution}}\)`
 .pull-right[
 -  `\(\text{Var}\left(\text{count}\right) = \phi\mathbb{E}(\text{count})^q\)`
 - Poisson is `\(q=1\)` 
-- We estimate `\(q\)` and `\(\phi\)` 
+- We estimate:
+  - `\(q\)` (`p` in R), "power" parameter
+  - `\(\phi\)` (`Scale est.` in R), scale parameter
 ]
 
 ---
@@ -130,6 +132,7 @@ where `\(\color{red}{n_j\sim \text{count distribution}}\)`
 .pull-right[
 - `\(\text{Var}\left(\text{count}\right) =\)` `\(\mathbb{E}(\text{count}) + \kappa \mathbb{E}(\text{count})^2\)`
 - Estimate `\(\kappa\)`
+- No scale parameter (`Scale est.`=1 always)
 - (Poisson: `\(\text{Var}\left(\text{count}\right) =\mathbb{E}(\text{count})\)`) 
 ]
 
