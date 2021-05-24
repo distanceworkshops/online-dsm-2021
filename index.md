@@ -6,7 +6,9 @@ layout: index
 
 # Spatially explicit models for distance sampling data: density surface modelling in practice
 
-**8-12 March 2021, 1600-1800 BST // 1100-1300 EDT // 0800-1000 PDT**
+**16-20 August 2021, 1600-1800 BST // 1100-1300 EDT // 0800-1000 PDT**
+
+[**Course registration is open here**](https://onlineshop.st-andrews.ac.uk/conferences-and-events/events/creem/spatially-explicit-models-for-distance-sampling-data-training-workshop-live-online-1620-august-2021?token=533641e57231051f2f47efb5c929f0fe)
 
 This online course will cover how to fit spatial models to distance sampling data ("density surface modelling") in R. This will include:
 
