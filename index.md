@@ -8,7 +8,7 @@ layout: index
 
 **16-20 August 2021, 1600-1800 BST // 1100-1300 EDT // 0800-1000 PDT**
 
-[**Course registration is open here**](https://onlineshop.st-andrews.ac.uk/conferences-and-events/events/creem/spatially-explicit-models-for-distance-sampling-data-training-workshop-live-online-1620-august-2021?token=533641e57231051f2f47efb5c929f0fe)
+<!--[**Course registration is open here**](https://onlineshop.st-andrews.ac.uk/conferences-and-events/events/creem/spatially-explicit-models-for-distance-sampling-data-training-workshop-live-online-1620-august-2021?token=533641e57231051f2f47efb5c929f0fe)-->
 
 This online course will cover how to fit spatial models to distance sampling data ("density surface modelling") in R. This will include:
 
@@ -23,6 +23,10 @@ Examples will be based around a line transect survey of sperm whales in the west
 ### Format
 
 The course will consist of 5 live sessions delivered over videoconference. Between these sessions there will be practical R exercises to complete and to assist with these practicals there will be text-based "office hours", where participants questions can be addressed. Each videoconference session will include time for lecturing and discussion of practical exercises.
+
+### Enquiries
+
+For more information about the workshop or registration process please contact Dave Miller at dlm22@st-andrews.ac.uk.
 
 ## Schedule
 
