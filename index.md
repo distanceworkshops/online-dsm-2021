@@ -20,9 +20,27 @@ This online course will cover how to fit spatial models to distance sampling dat
 
 Examples will be based around a line transect survey of sperm whales in the western Atlantic.
 
+
+Enrolment is limited to 15.
+
+Cost: £250
+
+Registration deadline: 26 July 2021
+
 ### Format
 
 The course will consist of 5 live sessions delivered over videoconference. Between these sessions there will be practical R exercises to complete and to assist with these practicals there will be text-based "office hours", where participants questions can be addressed. Each videoconference session will include time for lecturing and discussion of practical exercises.
+
+
+### Prerequisites:
+
+You should already know about distance sampling, for example by having
+taken an introductory workshop in person or online (either interactively
+or via our free pre-recorded lectures). You should also have experience
+using R.
+
+Prior to the course we will running a software test meeting to ensure
+everyone can participate satisfactorily.
 
 ### Enquiries
 
